@@ -5,6 +5,7 @@ public struct AppConfig: Codable, Equatable {
     public var globalMonthlyBudget: Double
     public var serviceBudgets: [String: Double]
     public var enterpriseServices: [String: Bool]
+    public var enabledServices: [String: Bool]
     public var antigravityQuotaMillions: Double
     public var alertThresholds: [Double]
     public var refreshIntervalMinutes: Int
@@ -15,6 +16,11 @@ public struct AppConfig: Codable, Equatable {
     public var cursorBillingResetDay: Int
     public var claudeBillingResetDay: Int
     public var antigravityBillingResetDay: Int
+    public var codexBillingResetDay: Int
+
+    // Codex settings (local quota snapshots; optional manually entered cycle spend)
+    public var codexHomePath: String
+    public var codexManualSpend: Double?
 
     // Cursor settings
     public var cursorSessionToken: String
@@ -38,13 +44,16 @@ public struct AppConfig: Codable, Equatable {
         serviceBudgets: [String: Double] = [
             AIService.cursor.rawValue: 2000.0,
             AIService.claude.rawValue: 2000.0,
-            AIService.antigravity.rawValue: 200.0
+            AIService.antigravity.rawValue: 200.0,
+            AIService.codex.rawValue: 200.0
         ],
         enterpriseServices: [String: Bool] = [
             AIService.cursor.rawValue: true,
             AIService.claude.rawValue: true,
-            AIService.antigravity.rawValue: false
+            AIService.antigravity.rawValue: false,
+            AIService.codex.rawValue: false
         ],
+        enabledServices: [String: Bool] = [:],
         antigravityQuotaMillions: Double = 5.0,
         alertThresholds: [Double] = [0.50, 0.80, 1.00],
         refreshIntervalMinutes: Int = 15,
@@ -53,6 +62,9 @@ public struct AppConfig: Codable, Equatable {
         cursorBillingResetDay: Int = 16,
         claudeBillingResetDay: Int = 1,
         antigravityBillingResetDay: Int = 18,
+        codexBillingResetDay: Int = 1,
+        codexHomePath: String = "",
+        codexManualSpend: Double? = nil,
         cursorSessionToken: String = "",
         cursorApiKey: String = "",
         cursorTeamId: String = "2963894",
@@ -68,6 +80,7 @@ public struct AppConfig: Codable, Equatable {
         self.globalMonthlyBudget = globalMonthlyBudget
         self.serviceBudgets = serviceBudgets
         self.enterpriseServices = enterpriseServices
+        self.enabledServices = enabledServices
         self.antigravityQuotaMillions = antigravityQuotaMillions
         self.alertThresholds = alertThresholds
         self.refreshIntervalMinutes = refreshIntervalMinutes
@@ -76,6 +89,9 @@ public struct AppConfig: Codable, Equatable {
         self.cursorBillingResetDay = cursorBillingResetDay
         self.claudeBillingResetDay = claudeBillingResetDay
         self.antigravityBillingResetDay = antigravityBillingResetDay
+        self.codexBillingResetDay = codexBillingResetDay
+        self.codexHomePath = codexHomePath
+        self.codexManualSpend = codexManualSpend
         self.cursorSessionToken = cursorSessionToken
         self.cursorApiKey = cursorApiKey
         self.cursorTeamId = cursorTeamId
@@ -96,13 +112,16 @@ public struct AppConfig: Codable, Equatable {
         self.serviceBudgets = try c.decodeIfPresent([String: Double].self, forKey: .serviceBudgets) ?? [
             AIService.cursor.rawValue: 2000.0,
             AIService.claude.rawValue: 2000.0,
-            AIService.antigravity.rawValue: 200.0
+            AIService.antigravity.rawValue: 200.0,
+            AIService.codex.rawValue: 200.0
         ]
         self.enterpriseServices = try c.decodeIfPresent([String: Bool].self, forKey: .enterpriseServices) ?? [
             AIService.cursor.rawValue: true,
             AIService.claude.rawValue: true,
-            AIService.antigravity.rawValue: false
+            AIService.antigravity.rawValue: false,
+            AIService.codex.rawValue: false
         ]
+        self.enabledServices = try c.decodeIfPresent([String: Bool].self, forKey: .enabledServices) ?? [:]
         self.antigravityQuotaMillions = try c.decodeIfPresent(Double.self, forKey: .antigravityQuotaMillions) ?? 5.0
         self.alertThresholds = try c.decodeIfPresent([Double].self, forKey: .alertThresholds) ?? [0.50, 0.80, 1.00]
         self.refreshIntervalMinutes = try c.decodeIfPresent(Int.self, forKey: .refreshIntervalMinutes) ?? 15
@@ -112,6 +131,9 @@ public struct AppConfig: Codable, Equatable {
         self.cursorBillingResetDay = try c.decodeIfPresent(Int.self, forKey: .cursorBillingResetDay) ?? 16
         self.claudeBillingResetDay = try c.decodeIfPresent(Int.self, forKey: .claudeBillingResetDay) ?? 1
         self.antigravityBillingResetDay = try c.decodeIfPresent(Int.self, forKey: .antigravityBillingResetDay) ?? 18
+        self.codexBillingResetDay = try c.decodeIfPresent(Int.self, forKey: .codexBillingResetDay) ?? 1
+        self.codexHomePath = try c.decodeIfPresent(String.self, forKey: .codexHomePath) ?? ""
+        self.codexManualSpend = try c.decodeIfPresent(Double.self, forKey: .codexManualSpend)
 
         self.cursorSessionToken = try c.decodeIfPresent(String.self, forKey: .cursorSessionToken) ?? ""
         self.cursorApiKey = try c.decodeIfPresent(String.self, forKey: .cursorApiKey) ?? ""
@@ -184,11 +206,24 @@ public struct AppConfig: Codable, Equatable {
     }
 
     public func budgetFor(service: AIService) -> Double {
+        if service == .codex { return serviceBudgets[service.rawValue] ?? 200.0 }
         return serviceBudgets[service.rawValue] ?? 0.0
     }
 
+    public func isEnabled(service: AIService) -> Bool {
+        return enabledServices[service.rawValue] ?? true
+    }
+
+    public var activeServices: [AIService] {
+        AIService.allCases.filter { isEnabled(service: $0) }
+    }
+
+    public mutating func setEnabled(_ enabled: Bool, for service: AIService) {
+        enabledServices[service.rawValue] = enabled
+    }
+
     public func isEnterprise(service: AIService) -> Bool {
-        return enterpriseServices[service.rawValue] ?? (service != .antigravity)
+        return enterpriseServices[service.rawValue] ?? (service == .cursor || service == .claude)
     }
 
     public mutating func setEnterprise(_ isEnt: Bool, for service: AIService) {
@@ -200,7 +235,7 @@ public struct AppConfig: Codable, Equatable {
         if globalMonthlyBudget > 0 {
             return globalMonthlyBudget
         }
-        return AIService.allCases
+        return activeServices
             .filter { isEnterprise(service: $0) }
             .reduce(0.0) { $0 + budgetFor(service: $1) }
     }
@@ -210,6 +245,7 @@ public struct AppConfig: Codable, Equatable {
         case .cursor: return cursorBillingResetDay
         case .claude: return claudeBillingResetDay
         case .antigravity: return antigravityBillingResetDay
+        case .codex: return codexBillingResetDay
         }
     }
 }

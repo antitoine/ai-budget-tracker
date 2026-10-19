@@ -25,6 +25,7 @@ MAIN_SOURCES=(
   "$PROJECT_ROOT/Sources/AIBudgetBar/Services/AntigravityTracker.swift"
   "$PROJECT_ROOT/Sources/AIBudgetBar/Services/CursorTracker.swift"
   "$PROJECT_ROOT/Sources/AIBudgetBar/Services/ClaudeTracker.swift"
+  "$PROJECT_ROOT/Sources/AIBudgetBar/Services/CodexTracker.swift"
   "$PROJECT_ROOT/Sources/AIBudgetBar/Services/BudgetManager.swift"
   "$PROJECT_ROOT/Sources/AIBudgetBar/UI/HistoryChartView.swift"
   "$PROJECT_ROOT/Sources/AIBudgetBar/UI/ServiceRowView.swift"

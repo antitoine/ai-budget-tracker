@@ -1,0 +1,19 @@
+name: macOS build and tests
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  macos:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test configuration and trackers
+        run: swift test
+      - name: Build app and WidgetKit extension
+        run: make build

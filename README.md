@@ -1,6 +1,6 @@
 # ✦ AI Budget Tracker & Widgets for macOS
 
-**AI Budget Tracker** allows you to **track your AI spending and usage in real time** across **Cursor**, **Antigravity**, and **Claude**, with **two widget formats dedicated to the right side of your screen (Notifications & Desktop)**:
+**AI Budget Tracker** allows you to **track your AI spending and usage** across **Cursor**, **Antigravity**, **Claude**, and **Codex**, with **two widget formats dedicated to the right side of your screen (Notifications & Desktop)**:
 
 1. 📱 **Official Apple Widget (WidgetKit)**: directly integrated into the **macOS Notification Center** (right sidebar) and placeable on your desktop.
 2. 🪟 **Floating Sidebar Widget**: an ultra-sleek frosted glass card that automatically docks to the right edge of your screen, perfect if your menu bar is crowded!
@@ -47,7 +47,9 @@
    - Displays monthly total in real time (`✨ $42.80`).
    - The icon automatically adapts (green/neutral below budget, orange approaching threshold, red if exceeded).
 
-2. **100% Automatic Connection to the 3 Services**:
+2. **Choose Which Services to Track**:
+   - Enable or disable each AI in **Preferences → Services & Cycles**, then click **Save and Refresh**.
+   - Disabled services keep their settings, stop making requests and scanning local activity, and are excluded from service lists, totals, charts, alerts, and widgets.
    - **Cursor**:
      - Supports the `WorkosCursorSessionToken` session cookie (retrieves exact fast request counts and monthly cost).
      - Also supports Team Admin API keys (`api.cursor.com`).
@@ -58,6 +60,10 @@
    - **Claude (Anthropic)**:
      - Connects to Anthropic billing Admin API (`/v1/organizations/cost_report` and `usage_report/messages`).
      - Supports monthly Claude Pro fixed plan if desired.
+   - **Codex (OpenAI)**:
+     - Displays recent 5-hour and weekly quota snapshots recorded by local Codex sessions, without an API key.
+     - Shows unavailable when no supported, unexpired snapshot exists. Run Codex locally to record an update.
+     - Enterprise mode supports a manually entered billing-cycle spend; local quota snapshots do not provide billed amounts.
 
 3. **7-Day Trend Chart**:
    - Mini stacked bar chart showing day-by-day budget expenditure for each tool.
@@ -95,6 +101,8 @@ make clean    # Removes compilation artifacts
 
 To configure your credentials, click the menu bar icon and select **⚙️ Preferences** (or directly edit `~/.config/ai-budget-bar/config.json`):
 
+All four services are enabled by default, including when opening an older configuration. Use the service switches to hide any you do not use. Switches persist in the `enabledServices` dictionary, for example `"enabledServices": {"cursor": false, "codex": true}`. Standard macOS editing shortcuts, including **⌘V** to paste into cookie and key fields, work in Preferences.
+
 ### 1. Cursor
 - Go to [cursor.com/dashboard](https://www.cursor.com/dashboard)
 - Open browser Developer Tools (`F12` or `Inspect`) > **Application** / **Storage** tab > **Cookies** > `https://www.cursor.com`
@@ -106,6 +114,16 @@ To configure your credentials, click the menu bar icon and select **⚙️ Prefe
 ### 3. Claude (Anthropic)
 - Go to [console.anthropic.com/settings/keys](https://console.anthropic.com/settings/keys)
 - Create or copy an Admin key starting with `sk-ant-admin...` (required to access organization cost reports).
+
+### 4. Codex (OpenAI)
+- Select **Plan (Quotas)** for local quota tracking. The tracker reads `sessions` and `archived_sessions` under `~/.codex`, or under `CODEX_HOME` when set. You can also enter a Codex home directory in Preferences (takes priority over the environment variable).
+- These [local session locations](https://learn.chatgpt.com/docs/reference/troubleshooting#feedback-and-logs) contain the quota snapshots recorded by Codex. Only quota metadata is used; no credentials or transcript contents are sent to an API.
+- Scanning is bounded to the last 512 KiB of the 64 most recently modified session files from the last seven days. Values describe the most recent recorded snapshot, not a live account query, and expired windows are shown as unavailable.
+- Select **Enterprise** to enter the current cycle's spend and reset day manually. Update the amount each cycle. Manual totals contribute to the budget and alerts but are excluded from the daily chart because there is no daily billing breakdown.
+
+## Validation
+
+On macOS, run `swift test` and `make build`. The build also compiles and packages the WidgetKit extension. GitHub Actions runs both checks on macOS.
 
 ---
 
@@ -131,6 +149,7 @@ To configure your credentials, click the menu bar icon and select **⚙️ Prefe
     │   │   ├── AntigravityTracker.swift # Local ~/.gemini transcript scanner
     │   │   ├── BudgetManager.swift      # Coordination, notifications, and cache
     │   │   ├── ClaudeTracker.swift      # Anthropic Admin Cost Report API client
+    │   │   ├── CodexTracker.swift       # Local Codex quota snapshots / manual spend
     │   │   └── CursorTracker.swift      # Cursor API client and session cookies
     │   └── UI/
     │       ├── HistoryChartView.swift   # 7-day stacked bar chart

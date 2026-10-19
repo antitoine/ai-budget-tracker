@@ -80,153 +80,236 @@ public struct PreferencesView: View {
         )
     }
 
+    private func enabledBinding(for service: AIService) -> Binding<Bool> {
+        Binding(get: { config.isEnabled(service: service) },
+                set: { config.setEnabled($0, for: service) })
+    }
+
     // MARK: - Services Tab
     private var servicesTab: some View {
         VStack(alignment: .leading, spacing: 16) {
-            // Cursor Section
-            VStack(alignment: .leading, spacing: 8) {
-                HStack {
-                    Image(systemName: AIService.cursor.iconName)
-                        .foregroundColor(AIService.cursor.brandColor)
-                    Text("Cursor")
-                        .font(.headline)
-                    Spacer()
-                    Picker("", selection: enterpriseBinding(for: .cursor)) {
-                        Text("🏢 Enterprise").tag(true)
-                        Text("👤 Plan (Quotas)").tag(false)
-                    }
-                    .pickerStyle(SegmentedPickerStyle())
-                    .frame(width: 210)
+            Text("Choose which AI services to track. Disabled services keep their settings and are excluded from usage, totals, and widgets.")
+                .font(.caption)
+                .foregroundColor(.secondary)
+            ForEach(AIService.allCases) { service in
+                Toggle(isOn: enabledBinding(for: service)) {
+                    Label(service.displayName, systemImage: service.iconName)
+                        .foregroundColor(service.brandColor)
                 }
-
-                if config.isEnterprise(service: .cursor) {
-                    HStack {
-                        Text("Monthly billing cycle reset day:")
-                            .font(.subheadline)
-                        Spacer()
-                        TextField("16", value: $config.cursorBillingResetDay, format: .number)
-                            .textFieldStyle(RoundedBorderTextFieldStyle())
-                            .frame(width: 50)
-                        Text("of the month")
-                            .font(.caption)
-                    }
-                }
-
-                Text("Session cookie (WorkosCursorSessionToken):")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-
-                SecureField("Paste your WorkosCursorSessionToken", text: $config.cursorSessionToken)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
-
-                Text("✓ Automatic synchronization via Cursor CSV export (Team #\(config.cursorTeamId)).")
-                    .font(.system(size: 10))
-                    .foregroundColor(.green)
             }
-            .padding(12)
-            .background(RoundedRectangle(cornerRadius: 8).fill(Color(NSColor.controlBackgroundColor).opacity(0.5)))
+            Divider()
+
+            // Cursor Section
+            if config.isEnabled(service: .cursor) {
+                cursorSettings
+            }
 
             // Claude Section
-            VStack(alignment: .leading, spacing: 8) {
-                HStack {
-                    Image(systemName: AIService.claude.iconName)
-                        .foregroundColor(AIService.claude.brandColor)
-                    Text("Claude (Anthropic)")
-                        .font(.headline)
-                    Spacer()
-                    Picker("", selection: enterpriseBinding(for: .claude)) {
-                        Text("🏢 Enterprise").tag(true)
-                        Text("👤 Plan (Quotas)").tag(false)
-                    }
-                    .pickerStyle(SegmentedPickerStyle())
-                    .frame(width: 210)
-                }
-
-                if config.isEnterprise(service: .claude) {
-                    HStack {
-                        Text("Monthly billing cycle reset day:")
-                            .font(.subheadline)
-                        Spacer()
-                        TextField("1", value: $config.claudeBillingResetDay, format: .number)
-                            .textFieldStyle(RoundedBorderTextFieldStyle())
-                            .frame(width: 50)
-                        Text("of the month")
-                            .font(.caption)
-                    }
-                }
-
-                Text("claude.ai sessionKey cookie (100% automatic synchronization):")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-
-                SecureField("sk-ant-sid02-...", text: $config.claudeSessionCookie)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
-
-                if !config.claudeSessionCookie.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                    Text("✓ Automatic synchronization active with claude.ai/settings/usage.")
-                        .font(.system(size: 10))
-                        .foregroundColor(.green)
-                } else {
-                    HStack {
-                        Text("Or fallback manual amount:")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                        Spacer()
-                        TextField("0.00", value: Binding(
-                            get: { config.claudeManualSpend ?? 0.0 },
-                            set: { config.claudeManualSpend = $0 > 0 ? $0 : nil }
-                        ), format: .number)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                        .frame(width: 90)
-                        Text(config.currency)
-                            .font(.caption)
-                    }
-                }
+            if config.isEnabled(service: .claude) {
+                claudeSettings
             }
-            .padding(12)
-            .background(RoundedRectangle(cornerRadius: 8).fill(Color(NSColor.controlBackgroundColor).opacity(0.5)))
 
             // Antigravity Section
-            VStack(alignment: .leading, spacing: 8) {
+            if config.isEnabled(service: .antigravity) {
+                antigravitySettings
+            }
+            if config.isEnabled(service: .codex) {
+                codexSettings
+            }
+        }
+    }
+
+    private var cursorSettings: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Image(systemName: AIService.cursor.iconName)
+                    .foregroundColor(AIService.cursor.brandColor)
+                Text("Cursor")
+                    .font(.headline)
+                Spacer()
+                Picker("", selection: enterpriseBinding(for: .cursor)) {
+                    Text("🏢 Enterprise").tag(true)
+                    Text("👤 Plan (Quotas)").tag(false)
+                }
+                .pickerStyle(SegmentedPickerStyle())
+                .frame(width: 210)
+            }
+
+            if config.isEnterprise(service: .cursor) {
                 HStack {
-                    Image(systemName: AIService.antigravity.iconName)
-                        .foregroundColor(AIService.antigravity.brandColor)
-                    Text("Antigravity")
-                        .font(.headline)
+                    Text("Monthly billing cycle reset day:")
+                        .font(.subheadline)
                     Spacer()
-                    Picker("", selection: enterpriseBinding(for: .antigravity)) {
-                        Text("🏢 Enterprise").tag(true)
-                        Text("👤 Plan (Quotas)").tag(false)
-                    }
-                    .pickerStyle(SegmentedPickerStyle())
-                    .frame(width: 210)
+                    TextField("16", value: $config.cursorBillingResetDay, format: .number)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .frame(width: 50)
+                    Text("of the month")
+                        .font(.caption)
                 }
+            }
 
-                if config.isEnterprise(service: .antigravity) {
-                    HStack {
-                        Text("Monthly billing cycle reset day:")
-                            .font(.subheadline)
-                        Spacer()
-                        TextField("18", value: $config.antigravityBillingResetDay, format: .number)
-                            .textFieldStyle(RoundedBorderTextFieldStyle())
-                            .frame(width: 50)
-                        Text("of the month")
-                            .font(.caption)
-                    }
+            Text("Session cookie (WorkosCursorSessionToken):")
+                .font(.caption)
+                .foregroundColor(.secondary)
+
+            SecureField("Paste your WorkosCursorSessionToken", text: $config.cursorSessionToken)
+                .textFieldStyle(RoundedBorderTextFieldStyle())
+
+            Text("✓ Automatic synchronization via Cursor CSV export (Team #\(config.cursorTeamId)).")
+                .font(.system(size: 10))
+                .foregroundColor(.green)
+        }
+        .padding(12)
+        .background(RoundedRectangle(cornerRadius: 8).fill(Color(NSColor.controlBackgroundColor).opacity(0.5)))
+    }
+
+    private var claudeSettings: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Image(systemName: AIService.claude.iconName)
+                    .foregroundColor(AIService.claude.brandColor)
+                Text("Claude (Anthropic)")
+                    .font(.headline)
+                Spacer()
+                Picker("", selection: enterpriseBinding(for: .claude)) {
+                    Text("🏢 Enterprise").tag(true)
+                    Text("👤 Plan (Quotas)").tag(false)
                 }
+                .pickerStyle(SegmentedPickerStyle())
+                .frame(width: 210)
+            }
 
-                Toggle("Automatically scan local activity (~/.gemini/antigravity/brain)", isOn: $config.antigravityScanBrainDir)
-                    .font(.caption)
+            if config.isEnterprise(service: .claude) {
+                HStack {
+                    Text("Monthly billing cycle reset day:")
+                        .font(.subheadline)
+                    Spacer()
+                    TextField("1", value: $config.claudeBillingResetDay, format: .number)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .frame(width: 50)
+                    Text("of the month")
+                        .font(.caption)
+                }
+            }
 
-                Text(config.isEnterprise(service: .antigravity)
-                     ? "✓ Enterprise Mode: estimated cost included in global budget."
-                     : "✓ Personal Plan Mode: displays only remaining quota % on a rolling window (no monthly cycle or $ amount).")
+            Text("claude.ai sessionKey cookie (100% automatic synchronization):")
+                .font(.caption)
+                .foregroundColor(.secondary)
+
+            SecureField("sk-ant-sid02-...", text: $config.claudeSessionCookie)
+                .textFieldStyle(RoundedBorderTextFieldStyle())
+
+            if !config.claudeSessionCookie.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                Text("✓ Automatic synchronization active with claude.ai/settings/usage.")
                     .font(.system(size: 10))
                     .foregroundColor(.green)
+            } else {
+                HStack {
+                    Text("Or fallback manual amount:")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    Spacer()
+                    TextField("0.00", value: Binding(
+                        get: { config.claudeManualSpend ?? 0.0 },
+                        set: { config.claudeManualSpend = $0 > 0 ? $0 : nil }
+                    ), format: .number)
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                    .frame(width: 90)
+                    Text(config.currency)
+                        .font(.caption)
+                }
             }
-            .padding(12)
-            .background(RoundedRectangle(cornerRadius: 8).fill(Color(NSColor.controlBackgroundColor).opacity(0.5)))
         }
+        .padding(12)
+        .background(RoundedRectangle(cornerRadius: 8).fill(Color(NSColor.controlBackgroundColor).opacity(0.5)))
+    }
+
+    private var antigravitySettings: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Image(systemName: AIService.antigravity.iconName)
+                    .foregroundColor(AIService.antigravity.brandColor)
+                Text("Antigravity")
+                    .font(.headline)
+                Spacer()
+                Picker("", selection: enterpriseBinding(for: .antigravity)) {
+                    Text("🏢 Enterprise").tag(true)
+                    Text("👤 Plan (Quotas)").tag(false)
+                }
+                .pickerStyle(SegmentedPickerStyle())
+                .frame(width: 210)
+            }
+
+            if config.isEnterprise(service: .antigravity) {
+                HStack {
+                    Text("Monthly billing cycle reset day:")
+                        .font(.subheadline)
+                    Spacer()
+                    TextField("18", value: $config.antigravityBillingResetDay, format: .number)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .frame(width: 50)
+                    Text("of the month")
+                        .font(.caption)
+                }
+            }
+
+            Toggle("Automatically scan local activity (~/.gemini/antigravity/brain)", isOn: $config.antigravityScanBrainDir)
+                .font(.caption)
+
+            Text(config.isEnterprise(service: .antigravity)
+                 ? "✓ Enterprise Mode: estimated cost included in global budget."
+                 : "✓ Personal Plan Mode: displays only remaining quota % on a rolling window (no monthly cycle or $ amount).")
+                .font(.system(size: 10))
+                .foregroundColor(.green)
+        }
+        .padding(12)
+        .background(RoundedRectangle(cornerRadius: 8).fill(Color(NSColor.controlBackgroundColor).opacity(0.5)))
+    }
+
+    private var codexSettings: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Label("Codex", systemImage: AIService.codex.iconName)
+                    .font(.headline)
+                    .foregroundColor(AIService.codex.brandColor)
+                Spacer()
+                Picker("", selection: enterpriseBinding(for: .codex)) {
+                    Text("🏢 Enterprise").tag(true)
+                    Text("👤 Plan (Quotas)").tag(false)
+                }
+                .pickerStyle(SegmentedPickerStyle())
+                .frame(width: 210)
+            }
+            if config.isEnterprise(service: .codex) {
+                HStack {
+                    Text("Monthly billing cycle reset day:").font(.subheadline)
+                    Spacer()
+                    TextField("1", value: $config.codexBillingResetDay, format: .number)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .frame(width: 50)
+                }
+                HStack {
+                    Text("Manual spend for the current cycle:").font(.caption)
+                    Spacer()
+                    TextField("0.00", value: $config.codexManualSpend, format: .number)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .frame(width: 90)
+                    Text(config.currency).font(.caption)
+                }
+                Text("Local Codex logs do not report billed amounts. Update this amount each billing cycle; it is excluded from the daily chart.")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            } else {
+                Text("Codex home directory (optional):").font(.caption)
+                TextField("~/.codex (or CODEX_HOME)", text: $config.codexHomePath)
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                Text("Reads recent 5-hour and weekly quota snapshots from local Codex sessions. Run Codex to update them. No API key required.")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+        }
+        .padding(12)
+        .background(RoundedRectangle(cornerRadius: 8).fill(Color(NSColor.controlBackgroundColor).opacity(0.5)))
     }
 
     // MARK: - Budgets Tab (CHAMPS LIBRES SANS SLIDER)
@@ -274,28 +357,35 @@ public struct PreferencesView: View {
                 .font(.subheadline)
                 .fontWeight(.bold)
 
-            if config.isEnterprise(service: .cursor) {
+            if config.isEnabled(service: .cursor) && config.isEnterprise(service: .cursor) {
                 freeBudgetRow(service: .cursor, title: "Cursor — Max limit (Resets on \(config.cursorBillingResetDay)):", binding: Binding(
                     get: { config.serviceBudgets[AIService.cursor.rawValue] ?? 2000.0 },
                     set: { config.serviceBudgets[AIService.cursor.rawValue] = $0 }
                 ))
             }
 
-            if config.isEnterprise(service: .claude) {
+            if config.isEnabled(service: .claude) && config.isEnterprise(service: .claude) {
                 freeBudgetRow(service: .claude, title: "Claude — Max limit (Resets on \(config.claudeBillingResetDay)):", binding: Binding(
                     get: { config.serviceBudgets[AIService.claude.rawValue] ?? 2000.0 },
                     set: { config.serviceBudgets[AIService.claude.rawValue] = $0 }
                 ))
             }
 
-            if config.isEnterprise(service: .antigravity) {
+            if config.isEnabled(service: .antigravity) && config.isEnterprise(service: .antigravity) {
                 freeBudgetRow(service: .antigravity, title: "Antigravity — Max limit (Resets on \(config.antigravityBillingResetDay)):", binding: Binding(
                     get: { config.serviceBudgets[AIService.antigravity.rawValue] ?? 200.0 },
                     set: { config.serviceBudgets[AIService.antigravity.rawValue] = $0 }
                 ))
             }
 
-            let quotaServices = AIService.allCases.filter { !config.isEnterprise(service: $0) }
+            if config.isEnabled(service: .codex) && config.isEnterprise(service: .codex) {
+                freeBudgetRow(service: .codex, title: "Codex — Max limit (Resets on \(config.codexBillingResetDay)):", binding: Binding(
+                    get: { config.budgetFor(service: .codex) },
+                    set: { config.serviceBudgets[AIService.codex.rawValue] = $0 }
+                ))
+            }
+
+            let quotaServices = config.activeServices.filter { !config.isEnterprise(service: $0) }
             if !quotaServices.isEmpty {
                 let names = quotaServices.map { $0.displayName }.joined(separator: ", ")
                 HStack(spacing: 6) {

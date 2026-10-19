@@ -5,7 +5,7 @@ let args = CommandLine.arguments
 
 if args.contains("--help") || args.contains("-h") {
     print("""
-    AI Budget Bar - Cursor, Antigravity, and Claude budget tracking on macOS
+    AI Budget Bar - Cursor, Antigravity, Claude, and Codex budget tracking on macOS
 
     Usage:
       AIBudgetBar             Launch the application and display the widget
