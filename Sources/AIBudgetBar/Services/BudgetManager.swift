@@ -14,6 +14,7 @@ public final class BudgetManager: ObservableObject {
     private let cursorTracker = CursorTracker()
     private let antigravityTracker = AntigravityTracker()
     private let claudeTracker = ClaudeTracker()
+    private let codexTracker = CodexTracker()
 
     private var alertedThresholds: Set<Double> = []
 
@@ -26,14 +27,14 @@ public final class BudgetManager: ObservableObject {
         self.config = loadedConfig
 
         if let cached = Self.loadCache() {
-            self.summary = cached
+            self.summary = cached.applying(config: loadedConfig)
             self.lastRefreshed = cached.lastRefreshed
         } else {
             self.summary = BudgetSummary(
                 totalCost: 0.0,
                 totalBudget: loadedConfig.totalBudget,
                 monthName: "Current Cycles",
-                services: AIService.allCases.map { ServiceUsage(service: $0, budgetLimit: loadedConfig.budgetFor(service: $0)) },
+                services: loadedConfig.activeServices.map { ServiceUsage(service: $0, budgetLimit: loadedConfig.budgetFor(service: $0)) },
                 dailyHistory: Self.build7DayHistory(cursor: [:], antigravity: [:], claude: [:])
             )
         }
@@ -44,6 +45,11 @@ public final class BudgetManager: ObservableObject {
     public func updateConfig(_ newConfig: AppConfig) {
         self.config = newConfig
         newConfig.save()
+        // Apply switches immediately, including while a slow export is in flight.
+        summary = summary.applying(config: newConfig)
+        Self.saveCache(summary)
+        WidgetCenter.shared.reloadAllTimelines()
+        alertedThresholds.removeAll()
         setupTimer()
         Task {
             await refreshAll()
@@ -65,12 +71,22 @@ public final class BudgetManager: ObservableObject {
         isRefreshing = true
         defer { isRefreshing = false }
 
-        let cfg = config
+        // A save during an in-flight request must not publish the old configuration.
+        while true {
+            let cfg = config
+            await refresh(using: cfg)
+            if config == cfg { break }
+        }
+    }
+
+    private func refresh(using cfg: AppConfig) async {
         async let cursorAsync = cursorTracker.fetchUsage(config: cfg)
         async let antigravityAsync = antigravityTracker.fetchUsage(config: cfg)
         async let claudeAsync = claudeTracker.fetchUsage(config: cfg)
+        async let codexAsync = codexTracker.fetchUsage(config: cfg)
 
-        let (cursorRes, antigravityRes, claudeRes) = await (cursorAsync, antigravityAsync, claudeAsync)
+        let (cursorRes, antigravityRes, claudeRes, codexUsage) = await (cursorAsync, antigravityAsync, claudeAsync, codexAsync)
+        guard config == cfg else { return }
 
         // Cursor's export can be slow or fail transiently: keep the last good value.
         let previousCursor = summary.services.first { $0.service == .cursor }
@@ -78,7 +94,7 @@ public final class BudgetManager: ObservableObject {
         var cursorStatus = cursorRes.statusText
         var cursorDaily = cursorRes.dailyCosts
         var cursorRequests = cursorRes.requestCount
-        if cursorRes.isError, let prev = previousCursor, prev.cost > 0 {
+        if cfg.isEnabled(service: .cursor), cursorRes.isError, let prev = previousCursor, prev.cost > 0 {
             cursorCost = prev.cost
             cursorRequests = prev.requestCount
             cursorDaily = Dictionary(uniqueKeysWithValues: summary.dailyHistory.map { ($0.dateString, $0.cursorCost) })
@@ -87,7 +103,7 @@ public final class BudgetManager: ObservableObject {
             cursorStatus = "\(cursorRes.statusText) • as of \(f.string(from: prev.lastUpdated))"
         }
 
-        let cursorIsEnt = cfg.isEnterprise(service: .cursor)
+        let cursorIsEnt = cfg.isEnabled(service: .cursor) && cfg.isEnterprise(service: .cursor)
         let cursorQuotaUsed = min(100.0, Double(cursorRequests) / 5.0)
         let cursorRemaining = max(0.0, 100.0 - cursorQuotaUsed)
         let cursorUsage = ServiceUsage(
@@ -109,7 +125,7 @@ public final class BudgetManager: ObservableObject {
             lastUpdated: cursorRes.isError ? (previousCursor?.lastUpdated ?? Date()) : Date()
         )
 
-        let agyIsEnt = cfg.isEnterprise(service: .antigravity)
+        let agyIsEnt = cfg.isEnabled(service: .antigravity) && cfg.isEnterprise(service: .antigravity)
         let agyUsedPct = antigravityRes.rollingQuotaUsedPercent
         let agyRemainingPct = max(0.0, min(100.0, 100.0 - agyUsedPct))
         let antigravityUsage = ServiceUsage(
@@ -134,7 +150,7 @@ public final class BudgetManager: ObservableObject {
             lastUpdated: Date()
         )
 
-        let claudeIsEnt = cfg.isEnterprise(service: .claude)
+        let claudeIsEnt = cfg.isEnabled(service: .claude) && cfg.isEnterprise(service: .claude)
         let claudeLimit = cfg.budgetFor(service: .claude) > 0 ? cfg.budgetFor(service: .claude) : (claudeRes.detectedLimit ?? 2000.0)
         let claudeUsage = ServiceUsage(
             service: .claude,
@@ -162,7 +178,8 @@ public final class BudgetManager: ObservableObject {
             claude: claudeIsEnt ? claudeRes.dailyCosts : [:]
         )
 
-        let allServices = [cursorUsage, antigravityUsage, claudeUsage]
+        let allServices = [cursorUsage, antigravityUsage, claudeUsage, codexUsage]
+            .filter { cfg.isEnabled(service: $0.service) }
         let enterpriseTotalCost = allServices
             .filter { !$0.isQuotaMode }
             .reduce(0.0) { $0 + $1.cost }

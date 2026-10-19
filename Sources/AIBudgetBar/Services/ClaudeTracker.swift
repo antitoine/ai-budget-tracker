@@ -20,6 +20,11 @@ public final class ClaudeTracker {
     private let browserUserAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
 
     public func fetchUsage(config: AppConfig) async -> ClaudeResult {
+        guard config.isEnabled(service: .claude) else {
+            return ClaudeResult(cost: 0, detectedLimit: nil, inputTokens: 0, outputTokens: 0,
+                                cacheReadTokens: 0, dailyCosts: [:], statusText: "Disabled",
+                                isConfigured: false, isOrgManaged: false, orgBadge: nil, isError: false)
+        }
         let isEnt = config.isEnterprise(service: .claude)
         let badge = isEnt ? "🏢 Enterprise" : "👤 Personal"
 

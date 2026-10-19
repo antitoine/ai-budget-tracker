@@ -21,6 +21,11 @@ public final class CursorTracker {
     private static let exportTimeout: TimeInterval = 120
 
     public func fetchUsage(config: AppConfig) async -> CursorResult {
+        guard config.isEnabled(service: .cursor) else {
+            return CursorResult(cost: 0, requestCount: 0, requestLimit: nil, dailyCosts: [:],
+                                statusText: "Disabled", isConfigured: false, isOrgManaged: false,
+                                orgBadge: nil, isError: false)
+        }
         let token = config.cursorSessionToken.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !token.isEmpty else {
             return CursorResult(

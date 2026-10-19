@@ -209,4 +209,37 @@ public struct BudgetSummary: Codable {
     public var isOverBudget: Bool {
         return percentUsed >= 100.0
     }
+
+    /// Sanitize cached values before displaying them in the app or WidgetKit.
+    public func applying(config: AppConfig) -> BudgetSummary {
+        var result = self
+        result.services = config.activeServices.map { service in
+            guard let usage = services.first(where: { $0.service == service }) else {
+                return ServiceUsage(service: service, budgetLimit: config.budgetFor(service: service),
+                                    statusText: "Waiting for refresh",
+                                    isQuotaMode: !config.isEnterprise(service: service),
+                                    quotaPrimaryText: "Unavailable")
+            }
+            var updated = usage
+            updated.budgetLimit = config.budgetFor(service: usage.service)
+            // A change of billing mode requires a fresh reading, not stale amounts.
+            if usage.isQuotaMode == config.isEnterprise(service: usage.service) {
+                updated = ServiceUsage(service: usage.service, budgetLimit: updated.budgetLimit,
+                                       statusText: "Waiting for refresh",
+                                       isQuotaMode: !config.isEnterprise(service: usage.service),
+                                       quotaPrimaryText: "Unavailable")
+            }
+            return updated
+        }
+        result.totalCost = result.services.filter { !$0.isQuotaMode }.reduce(0) { $0 + $1.cost }
+        result.totalBudget = config.totalBudget
+        result.dailyHistory = dailyHistory.map { point in
+            var filtered = point
+            if !config.isEnabled(service: .cursor) || !config.isEnterprise(service: .cursor) { filtered.cursorCost = 0 }
+            if !config.isEnabled(service: .antigravity) || !config.isEnterprise(service: .antigravity) { filtered.antigravityCost = 0 }
+            if !config.isEnabled(service: .claude) || !config.isEnterprise(service: .claude) { filtered.claudeCost = 0 }
+            return filtered
+        }
+        return result
+    }
 }

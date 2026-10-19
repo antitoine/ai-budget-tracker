@@ -23,6 +23,12 @@ public final class AntigravityTracker {
     }
 
     public func fetchUsage(config: AppConfig) async -> AntigravityResult {
+        guard config.isEnabled(service: .antigravity) else {
+            return AntigravityResult(cost: 0, inputTokens: 0, outputTokens: 0, cacheReadTokens: 0,
+                                     conversationCount: 0, rollingQuotaUsedPercent: 0, quotaGroups: [],
+                                     quotaPrimaryText: nil, quotaSecondaryText: nil, dailyCosts: [:],
+                                     statusText: "Disabled", isConfigured: false)
+        }
         // 1. Always try to fetch live real quotas from the running Antigravity language_server
         let liveGroups = await fetchLiveQuotaGroups() ?? Self.loadCachedQuotaGroups() ?? []
         if !liveGroups.isEmpty {

@@ -104,7 +104,11 @@ public struct ServiceRowView: View {
             }
 
             // Progress bar or detailed per-model quota groups
-            if usage.isQuotaMode && !usage.quotaGroups.isEmpty {
+            if usage.isQuotaMode && usage.quotaPercent == nil {
+                Text("Quota unavailable until a fresh reading is recorded")
+                    .font(.system(size: 9))
+                    .foregroundColor(.secondary)
+            } else if usage.isQuotaMode && !usage.quotaGroups.isEmpty {
                 VStack(spacing: 5) {
                     ForEach(usage.quotaGroups) { grp in
                         HStack(spacing: 6) {

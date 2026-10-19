@@ -123,15 +123,23 @@ public struct SidebarWidgetView: View {
                     }
                 }
 
-                // 3 Service Rows
+                // Service rows scroll to fit when all four services are enabled.
+                ScrollView {
                 VStack(spacing: 8) {
+                    if config.activeServices.isEmpty {
+                        Text("No AI services enabled. Enable a service in Preferences.")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
                     ForEach(summary.services) { s in
                         ServiceRowView(usage: s, currency: config.currency)
                     }
                 }
+                }
+                .frame(maxHeight: 310)
 
                 // 7-day sparkline
-                HistoryChartView(dailyPoints: summary.dailyHistory, currency: config.currency)
+                HistoryChartView(dailyPoints: summary.dailyHistory, currency: config.currency, services: config.activeServices)
             }
             .padding(14)
 

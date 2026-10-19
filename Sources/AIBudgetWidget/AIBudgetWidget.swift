@@ -49,13 +49,13 @@ struct BudgetTimelineProvider: TimelineProvider {
 
     func getSnapshot(in context: Context, completion: @escaping (BudgetEntry) -> Void) {
         let cfg = AppConfig.load()
-        let summary = loadSummary() ?? sampleSummary()
+        let summary = (loadSummary() ?? BudgetSummary()).applying(config: cfg)
         completion(BudgetEntry(date: Date(), summary: summary, currency: cfg.currency))
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<BudgetEntry>) -> Void) {
         let cfg = AppConfig.load()
-        let summary = loadSummary() ?? sampleSummary()
+        let summary = (loadSummary() ?? BudgetSummary()).applying(config: cfg)
         let entry = BudgetEntry(date: Date(), summary: summary, currency: cfg.currency)
 
         // Refresh every 15 minutes
@@ -229,6 +229,11 @@ struct MediumBudgetWidgetView: View {
 
             // Right Column: Clickable Service Mini Cards
             VStack(spacing: 5) {
+                if summary.services.isEmpty {
+                    Text("Enable an AI service in Preferences")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
                 ForEach(summary.services) { s in
                     Link(destination: s.service.widgetDeepLinkURL) {
                         VStack(alignment: .leading, spacing: 2) {
@@ -390,6 +395,11 @@ struct LargeBudgetWidgetView: View {
 
             // Clickable Services
             VStack(spacing: 7) {
+                if summary.services.isEmpty {
+                    Text("Enable an AI service in Preferences")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
                 ForEach(summary.services) { s in
                     Link(destination: s.service.widgetDeepLinkURL) {
                         VStack(alignment: .leading, spacing: 6) {
@@ -425,7 +435,7 @@ struct LargeBudgetWidgetView: View {
                                         }
                                     }
 
-                                    if !s.isQuotaMode || s.quotaGroups.isEmpty {
+                                    if !s.isQuotaMode || s.quotaGroups.isEmpty || summary.services.count > 3 {
                                         Text(s.statusText)
                                             .font(.system(size: 9.5))
                                             .foregroundColor(.secondary)
@@ -437,7 +447,7 @@ struct LargeBudgetWidgetView: View {
                                 Spacer(minLength: 4)
 
                                 // Only show right-hand summary when there is no multi-row quota table below
-                                if !s.isQuotaMode || s.quotaGroups.isEmpty {
+                                if !s.isQuotaMode || s.quotaGroups.isEmpty || summary.services.count > 3 {
                                     VStack(alignment: .trailing, spacing: 1.5) {
                                         if s.isQuotaMode {
                                             Text(s.quotaPrimaryText ?? String(format: "%.0f%% remaining", s.remainingPercent))
@@ -472,7 +482,7 @@ struct LargeBudgetWidgetView: View {
                             }
 
                             // Real per-model quota breakdown for Antigravity
-                            if s.isQuotaMode && !s.quotaGroups.isEmpty {
+                            if s.isQuotaMode && !s.quotaGroups.isEmpty && summary.services.count <= 3 {
                                 Divider()
                                     .opacity(0.4)
 
@@ -559,7 +569,7 @@ struct AIBudgetWidget: Widget {
             AIBudgetWidgetEntryView(entry: entry)
         }
         .configurationDisplayName("AI Budget Tracker")
-        .description("Track your Cursor, Antigravity, and Claude spend and quotas in real-time.")
+        .description("Track your Cursor, Antigravity, Claude, and Codex spend and quotas.")
         .supportedFamilies([.systemMedium, .systemLarge])
     }
 }

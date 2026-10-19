@@ -3,12 +3,14 @@ import SwiftUI
 public struct HistoryChartView: View {
     public let dailyPoints: [DailyPoint]
     public let currency: String
+    public let services: [AIService]
 
     @State private var hoveredPoint: DailyPoint? = nil
 
-    public init(dailyPoints: [DailyPoint], currency: String) {
+    public init(dailyPoints: [DailyPoint], currency: String, services: [AIService] = [.cursor, .antigravity, .claude]) {
         self.dailyPoints = dailyPoints
         self.currency = currency
+        self.services = services
     }
 
     private var maxCost: Double {
@@ -32,9 +34,9 @@ public struct HistoryChartView: View {
                         .foregroundColor(.primary)
                 } else {
                     HStack(spacing: 6) {
-                        legendDot(color: AIService.cursor.brandColor, label: "Cursor")
-                        legendDot(color: AIService.antigravity.brandColor, label: "Antigravity")
-                        legendDot(color: AIService.claude.brandColor, label: "Claude")
+                        ForEach(services.filter { $0 != .codex }) { service in
+                            legendDot(color: service.brandColor, label: service.displayName)
+                        }
                     }
                     .fixedSize(horizontal: true, vertical: false)
                 }

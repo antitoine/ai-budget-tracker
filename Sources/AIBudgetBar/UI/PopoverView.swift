@@ -137,12 +137,17 @@ public struct PopoverView: View {
             // MARK: - Services List & History Chart
             ScrollView {
                 VStack(spacing: 10) {
+                    if config.activeServices.isEmpty {
+                        Text("No AI services enabled. Enable a service in Preferences.")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
                     ForEach(summary.services) { sUsage in
                         ServiceRowView(usage: sUsage, currency: config.currency)
                     }
 
                     // 7-day sparkline
-                    HistoryChartView(dailyPoints: summary.dailyHistory, currency: config.currency)
+                    HistoryChartView(dailyPoints: summary.dailyHistory, currency: config.currency, services: config.activeServices)
                 }
                 .padding(14)
             }
