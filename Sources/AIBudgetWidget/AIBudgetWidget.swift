@@ -1,6 +1,7 @@
 import WidgetKit
 import SwiftUI
 import AppIntents
+import AppKit
 
 // MARK: - Background Refresh AppIntent (keeps Notification Center open!)
 @available(macOS 14.0, *)
@@ -8,18 +9,29 @@ struct RefreshBudgetIntent: AppIntent {
     static var title: LocalizedStringResource = "Refresh Budgets"
     static var description = IntentDescription("Refreshes usage and quotas without closing the widget bar.")
 
+    init() {}
+
     func perform() async throws -> some IntentResult {
         let configDir = AppConfig.configDirectoryURL
         let cacheURL = configDir.appendingPathComponent("cache.json")
         let triggerURL = configDir.appendingPathComponent("refresh.trigger")
+        let refreshStateURL = configDir.appendingPathComponent("refreshing.state")
+
+        // 1. Mark refreshing state for widget timeline
+        try? FileManager.default.createDirectory(at: configDir, withIntermediateDirectories: true)
+        try? Data("1".utf8).write(to: refreshStateURL, options: .atomic)
+
+        defer {
+            try? FileManager.default.removeItem(at: refreshStateURL)
+            WidgetCenter.shared.reloadAllTimelines()
+        }
 
         let initialModDate = (try? FileManager.default.attributesOfItem(atPath: cacheURL.path)[.modificationDate] as? Date) ?? .distantPast
 
-        // 1. Write trigger file for sandboxed IPC
-        try? FileManager.default.createDirectory(at: configDir, withIntermediateDirectories: true)
+        // 2. Write trigger file for sandboxed file-based IPC
         try? Data("1".utf8).write(to: triggerURL, options: .atomic)
 
-        // 2. Also post DistributedNotification
+        // 3. Post DistributedNotification with deliverImmediately
         DistributedNotificationCenter.default().postNotificationName(
             NSNotification.Name("com.antigravity.aibudgetbar.refresh"),
             object: nil,
@@ -27,16 +39,25 @@ struct RefreshBudgetIntent: AppIntent {
             deliverImmediately: true
         )
 
-        // 3. Wait up to 2.4s for AIBudgetBar to update cache.json
-        for _ in 0..<8 {
-            try? await Task.sleep(nanoseconds: 300_000_000)
+        // 4. Ensure AIBudgetBar is running in the background quietly without stealing focus
+        if let refreshURL = URL(string: "aibudgetbar://refresh") {
+            let openConfig = NSWorkspace.OpenConfiguration()
+            openConfig.activates = false
+            openConfig.addsToRecentItems = false
+            NSWorkspace.shared.open(refreshURL, configuration: openConfig, completionHandler: nil)
+        }
+
+        // 5. Wait up to 4.5s for AIBudgetBar to update cache.json (polling every 150ms)
+        for _ in 0..<30 {
+            try? await Task.sleep(nanoseconds: 150_000_000)
             if let newModDate = try? FileManager.default.attributesOfItem(atPath: cacheURL.path)[.modificationDate] as? Date,
                newModDate > initialModDate {
+                // Short grace sleep for write flush
+                try? await Task.sleep(nanoseconds: 50_000_000)
                 break
             }
         }
 
-        WidgetCenter.shared.reloadAllTimelines()
         return .result()
     }
 }
@@ -44,19 +65,23 @@ struct RefreshBudgetIntent: AppIntent {
 // MARK: - Timeline Provider
 struct BudgetTimelineProvider: TimelineProvider {
     func placeholder(in context: Context) -> BudgetEntry {
-        BudgetEntry(date: Date(), summary: sampleSummary(), currency: "$")
+        BudgetEntry(date: Date(), summary: sampleSummary(), currency: "$", isRefreshing: false)
     }
 
     func getSnapshot(in context: Context, completion: @escaping (BudgetEntry) -> Void) {
         let cfg = AppConfig.load()
         let summary = (loadSummary() ?? BudgetSummary()).applying(config: cfg)
-        completion(BudgetEntry(date: Date(), summary: summary, currency: cfg.currency))
+        let refreshStateURL = AppConfig.configDirectoryURL.appendingPathComponent("refreshing.state")
+        let isRefreshing = FileManager.default.fileExists(atPath: refreshStateURL.path)
+        completion(BudgetEntry(date: Date(), summary: summary, currency: cfg.currency, isRefreshing: isRefreshing))
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<BudgetEntry>) -> Void) {
         let cfg = AppConfig.load()
         let summary = (loadSummary() ?? BudgetSummary()).applying(config: cfg)
-        let entry = BudgetEntry(date: Date(), summary: summary, currency: cfg.currency)
+        let refreshStateURL = AppConfig.configDirectoryURL.appendingPathComponent("refreshing.state")
+        let isRefreshing = FileManager.default.fileExists(atPath: refreshStateURL.path)
+        let entry = BudgetEntry(date: Date(), summary: summary, currency: cfg.currency, isRefreshing: isRefreshing)
 
         // Refresh every 15 minutes
         let nextUpdate = Calendar.current.date(byAdding: .minute, value: 15, to: Date()) ?? Date().addingTimeInterval(900)
@@ -145,12 +170,69 @@ struct BudgetEntry: TimelineEntry {
     let date: Date
     let summary: BudgetSummary
     let currency: String
+    var isRefreshing: Bool = false
+}
+
+// MARK: - Widget Refresh Toggle Styles (Optimistic Animated Feedback)
+struct MediumRefreshToggleStyle: ToggleStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        Button {
+            configuration.isOn.toggle()
+        } label: {
+            if configuration.isOn {
+                ProgressView()
+                    .progressViewStyle(.circular)
+                    .controlSize(.mini)
+                    .scaleEffect(0.65)
+                    .frame(width: 12, height: 12)
+            } else {
+                Image(systemName: "arrow.clockwise")
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundColor(.secondary)
+            }
+        }
+        .buttonStyle(.plain)
+        .disabled(configuration.isOn)
+    }
+}
+
+struct LargeRefreshToggleStyle: ToggleStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        Button {
+            configuration.isOn.toggle()
+        } label: {
+            HStack(spacing: 4) {
+                if configuration.isOn {
+                    ProgressView()
+                        .progressViewStyle(.circular)
+                        .controlSize(.mini)
+                        .scaleEffect(0.7)
+                        .frame(width: 11, height: 11)
+                    Text("Refreshing...")
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundColor(.secondary)
+                } else {
+                    Image(systemName: "arrow.clockwise")
+                        .font(.system(size: 10, weight: .medium))
+                    Text("Refresh")
+                        .font(.system(size: 10, weight: .medium))
+                }
+            }
+            .padding(.horizontal, 7)
+            .padding(.vertical, 3.5)
+            .background(RoundedRectangle(cornerRadius: 5).fill(Color.secondary.opacity(configuration.isOn ? 0.22 : 0.14)))
+            .foregroundColor(.primary)
+        }
+        .buttonStyle(.plain)
+        .disabled(configuration.isOn)
+    }
 }
 
 // MARK: - Medium Widget View
 struct MediumBudgetWidgetView: View {
     let summary: BudgetSummary
     let currency: String
+    var isRefreshing: Bool = false
 
     var body: some View {
         HStack(spacing: 10) {
@@ -167,13 +249,11 @@ struct MediumBudgetWidgetView: View {
 
                     Spacer(minLength: 2)
 
-                    // Refresh via AppIntent (does NOT close Notification Center!)
-                    Button(intent: RefreshBudgetIntent()) {
-                        Image(systemName: "arrow.clockwise")
-                            .font(.system(size: 10, weight: .semibold))
-                            .foregroundColor(.secondary)
+                    // Refresh via AppIntent with optimistic animation (does NOT close Notification Center!)
+                    Toggle(isOn: isRefreshing, intent: RefreshBudgetIntent()) {
+                        Text("Refresh")
                     }
-                    .buttonStyle(.plain)
+                    .toggleStyle(MediumRefreshToggleStyle())
 
                     // Open Floating Window
                     Link(destination: URL(string: "aibudgetbar://floating")!) {
@@ -299,6 +379,7 @@ struct MediumBudgetWidgetView: View {
 struct LargeBudgetWidgetView: View {
     let summary: BudgetSummary
     let currency: String
+    var isRefreshing: Bool = false
 
     var body: some View {
         VStack(spacing: 9) {
@@ -316,19 +397,11 @@ struct LargeBudgetWidgetView: View {
 
                 Spacer()
 
-                // Refresh button via AppIntent (does NOT close Notification Center!)
-                Button(intent: RefreshBudgetIntent()) {
-                    HStack(spacing: 3) {
-                        Image(systemName: "arrow.clockwise")
-                        Text("Refresh")
-                    }
-                    .font(.system(size: 10, weight: .medium))
-                    .padding(.horizontal, 7)
-                    .padding(.vertical, 3.5)
-                    .background(RoundedRectangle(cornerRadius: 5).fill(Color.secondary.opacity(0.14)))
-                    .foregroundColor(.primary)
+                // Refresh button via AppIntent with optimistic animation (does NOT close Notification Center!)
+                Toggle(isOn: isRefreshing, intent: RefreshBudgetIntent()) {
+                    Text("Refresh")
                 }
-                .buttonStyle(.plain)
+                .toggleStyle(LargeRefreshToggleStyle())
 
                 // Open Floating Window button
                 Link(destination: URL(string: "aibudgetbar://floating")!) {
@@ -550,9 +623,9 @@ struct AIBudgetWidgetEntryView: View {
         Group {
             switch family {
             case .systemLarge:
-                LargeBudgetWidgetView(summary: entry.summary, currency: entry.currency)
+                LargeBudgetWidgetView(summary: entry.summary, currency: entry.currency, isRefreshing: entry.isRefreshing)
             default:
-                MediumBudgetWidgetView(summary: entry.summary, currency: entry.currency)
+                MediumBudgetWidgetView(summary: entry.summary, currency: entry.currency, isRefreshing: entry.isRefreshing)
             }
         }
         .containerBackground(.fill.tertiary, for: .widget)

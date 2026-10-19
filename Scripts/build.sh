@@ -110,6 +110,13 @@ WIDGET_SOURCES=(
   "$PROJECT_ROOT/Sources/AIBudgetWidget/AIBudgetWidget.swift"
 )
 
+TARGET_ARCH="$(uname -m)"
+TARGET_TRIPLE="${TARGET_ARCH}-apple-macos14.0"
+SDK_ROOT="$(xcrun --show-sdk-path)"
+TOOLCHAIN_DIR="$(xcode-select -p)/Toolchains/XcodeDefault.xctoolchain"
+SWIFT_CONST_VALUES="$BUILD_DIR/AIBudgetWidget.swiftconstvalues"
+SWIFT_CONST_LIST="$BUILD_DIR/swiftconstvalues.list"
+
 swiftc \
   -module-cache-path "$CACHE_DIR" \
   -parse-as-library \
@@ -119,12 +126,33 @@ swiftc \
   -framework WidgetKit \
   -framework AppIntents \
   -framework SwiftUI \
+  -framework AppKit \
   -framework Foundation \
+  -target "$TARGET_TRIPLE" \
+  -Xfrontend -const-gather-protocols-file -Xfrontend "$PROJECT_ROOT/Scripts/AppIntents.json" \
+  -Xfrontend -emit-const-values-path -Xfrontend "$SWIFT_CONST_VALUES" \
   -O \
   "${WIDGET_SOURCES[@]}" \
   -o "$WIDGET_APPEX/Contents/MacOS/AIBudgetWidget"
 
 chmod +x "$WIDGET_APPEX/Contents/MacOS/AIBudgetWidget"
+
+echo "==> 2b. Generating AppIntents metadata for WidgetKit interactive buttons..."
+mkdir -p "$WIDGET_APPEX/Contents/Resources"
+echo "$SWIFT_CONST_VALUES" > "$SWIFT_CONST_LIST"
+
+xcrun appintentsmetadataprocessor \
+  --output "$WIDGET_APPEX/Contents/Resources" \
+  --toolchain-dir "$TOOLCHAIN_DIR" \
+  --module-name AIBudgetWidget \
+  --sdk-root "$SDK_ROOT" \
+  --xcode-version "15.0" \
+  --platform-family macOS \
+  --deployment-target "14.0" \
+  --target-triple "$TARGET_TRIPLE" \
+  --binary-file "$WIDGET_APPEX/Contents/MacOS/AIBudgetWidget" \
+  --source-files "${WIDGET_SOURCES[@]}" \
+  --swift-const-vals-list "$SWIFT_CONST_LIST"
 
 # Write Info.plist for Widget Extension
 cat << 'EOF' > "$WIDGET_APPEX/Contents/Info.plist"

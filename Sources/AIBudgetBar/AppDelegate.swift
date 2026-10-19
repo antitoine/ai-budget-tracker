@@ -95,29 +95,25 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
     private func setupWidgetIPC() {
         let dnc = DistributedNotificationCenter.default()
         dnc.addObserver(
-            forName: NSNotification.Name("com.antigravity.aibudgetbar.refresh"),
+            self,
+            selector: #selector(handleWidgetRefresh(_:)),
+            name: NSNotification.Name("com.antigravity.aibudgetbar.refresh"),
             object: nil,
-            queue: .main
-        ) { [weak self] _ in
-            Task { @MainActor [weak self] in
-                await self?.manager.refreshAll()
-            }
-        }
+            suspensionBehavior: .deliverImmediately
+        )
 
         dnc.addObserver(
-            forName: NSNotification.Name("com.antigravity.aibudgetbar.floating"),
+            self,
+            selector: #selector(handleWidgetFloating(_:)),
+            name: NSNotification.Name("com.antigravity.aibudgetbar.floating"),
             object: nil,
-            queue: .main
-        ) { [weak self] _ in
-            Task { @MainActor [weak self] in
-                self?.sidebarWidget.showWidget()
-            }
-        }
+            suspensionBehavior: .deliverImmediately
+        )
 
         // Fallback file-based IPC for sandboxed WidgetKit AppIntents
         let refreshTriggerURL = AppConfig.configDirectoryURL.appendingPathComponent("refresh.trigger")
         let floatingTriggerURL = AppConfig.configDirectoryURL.appendingPathComponent("floating.trigger")
-        ipcTimer = Timer.scheduledTimer(withTimeInterval: 0.7, repeats: true) { [weak self] _ in
+        ipcTimer = Timer.scheduledTimer(withTimeInterval: 0.2, repeats: true) { [weak self] _ in
             let fm = FileManager.default
             if fm.fileExists(atPath: refreshTriggerURL.path) {
                 try? fm.removeItem(at: refreshTriggerURL)
@@ -131,6 +127,18 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
                     self?.sidebarWidget.showWidget()
                 }
             }
+        }
+    }
+
+    @objc private func handleWidgetRefresh(_ notification: Notification) {
+        Task { @MainActor [weak self] in
+            await self?.manager.refreshAll()
+        }
+    }
+
+    @objc private func handleWidgetFloating(_ notification: Notification) {
+        Task { @MainActor [weak self] in
+            self?.sidebarWidget.showWidget()
         }
     }
 
