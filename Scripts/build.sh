@@ -4,7 +4,7 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-echo "==> 1. Compilation de AIBudgetBar (Application principale & Widget latéral)..."
+echo "==> 1. Compiling AIBudgetBar (Main application & sidebar widget)..."
 
 BUILD_DIR="$PROJECT_ROOT/build"
 APP_BUNDLE="$BUILD_DIR/AIBudgetBar.app"
@@ -56,7 +56,7 @@ cat << 'EOF' > "$APP_BUNDLE/Contents/Info.plist"
 <plist version="1.0">
 <dict>
     <key>CFBundleDevelopmentRegion</key>
-    <string>fr_FR</string>
+    <string>en</string>
     <key>CFBundleExecutable</key>
     <string>AIBudgetBar</string>
     <key>CFBundleIdentifier</key>
@@ -100,7 +100,7 @@ cat << 'EOF' > "$APP_BUNDLE/Contents/Info.plist"
 </plist>
 EOF
 
-echo "==> 2. Compilation de l'extension WidgetKit macOS (Centre de notifications)..."
+echo "==> 2. Compiling macOS WidgetKit extension (Notification Center)..."
 
 WIDGET_SOURCES=(
   "$PROJECT_ROOT/Sources/AIBudgetBar/Models/AIService.swift"
@@ -132,7 +132,7 @@ cat << 'EOF' > "$WIDGET_APPEX/Contents/Info.plist"
 <plist version="1.0">
 <dict>
     <key>CFBundleDevelopmentRegion</key>
-    <string>fr_FR</string>
+    <string>en</string>
     <key>CFBundleExecutable</key>
     <string>AIBudgetWidget</string>
     <key>CFBundleIdentifier</key>
@@ -182,8 +182,8 @@ cat << 'EOF' > "$WIDGET_ENTITLEMENTS"
 EOF
 
 # Sign bundles ad-hoc for macOS security (sign appex with entitlements first, then outer app without --deep overwriting appex)
-echo "==> 3. Signature des composants macOS (ad-hoc avec entitlements WidgetKit)..."
+echo "==> 3. Signing macOS components (ad-hoc with WidgetKit entitlements)..."
 codesign -s - --force --entitlements "$WIDGET_ENTITLEMENTS" "$WIDGET_APPEX"
 codesign -s - --force "$APP_BUNDLE"
 
-echo "==> Bundle complet généré avec succès dans $APP_BUNDLE"
+echo "==> Complete bundle successfully generated in $APP_BUNDLE"

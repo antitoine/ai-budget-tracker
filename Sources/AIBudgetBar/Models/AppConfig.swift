@@ -236,13 +236,13 @@ public enum BillingCycle {
         return (start, next)
     }
 
-    /// e.g. "Réinit. le 16 nov."
+    /// e.g. "Resets on Nov 16"
     public static func resetLabel(resetDay: Int, now: Date = Date()) -> String {
         let next = period(resetDay: resetDay, now: now).nextReset
         let f = DateFormatter()
-        f.locale = Locale(identifier: "fr_FR")
+        f.locale = Locale(identifier: "en_US")
         f.timeZone = TimeZone(identifier: "UTC")
-        f.dateFormat = "d MMM"
-        return "Réinit. le \(f.string(from: next))"
+        f.dateFormat = "MMM d"
+        return "Resets on \(f.string(from: next))"
     }
 }

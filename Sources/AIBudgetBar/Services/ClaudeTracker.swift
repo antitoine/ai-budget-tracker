@@ -21,7 +21,7 @@ public final class ClaudeTracker {
 
     public func fetchUsage(config: AppConfig) async -> ClaudeResult {
         let isEnt = config.isEnterprise(service: .claude)
-        let badge = isEnt ? "🏢 Entreprise" : "👤 Perso"
+        let badge = isEnt ? "🏢 Enterprise" : "👤 Personal"
 
         // 1. Try web session cookie if provided (100% automatic via claude.ai)
         let rawCookie = config.claudeSessionCookie.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -52,7 +52,7 @@ public final class ClaudeTracker {
                 outputTokens: 0,
                 cacheReadTokens: 0,
                 dailyCosts: [:],
-                statusText: "Cycle du \(config.claudeBillingResetDay) • Manuel (\(String(format: "%.1f%%", pct)))",
+                statusText: "Cycle starting on \(config.claudeBillingResetDay) • Manual (\(String(format: "%.1f%%", pct)))",
                 isConfigured: true,
                 isOrgManaged: isEnt,
                 orgBadge: badge,
@@ -67,7 +67,7 @@ public final class ClaudeTracker {
             outputTokens: 0,
             cacheReadTokens: 0,
             dailyCosts: [:],
-            statusText: "Non configuré (Ajoutez votre cookie sessionKey)",
+            statusText: "Not configured (Add your sessionKey cookie)",
             isConfigured: false,
             isOrgManaged: isEnt,
             orgBadge: badge,
@@ -77,7 +77,7 @@ public final class ClaudeTracker {
 
     private func fetchViaClaudeWeb(config: AppConfig, rawCookie: String) async -> ClaudeResult {
         guard let url = URL(string: "https://claude.ai/api/organizations") else {
-            return generateErrorResult(message: "URL invalide")
+            return generateErrorResult(message: "Invalid URL")
         }
 
         let cookieHeader: String
@@ -95,20 +95,20 @@ public final class ClaudeTracker {
         request.setValue(browserUserAgent, forHTTPHeaderField: "User-Agent")
 
         let isEnt = config.isEnterprise(service: .claude)
-        let badge = isEnt ? "🏢 Entreprise" : "👤 Perso"
+        let badge = isEnt ? "🏢 Enterprise" : "👤 Personal"
 
         do {
             let (data, response) = try await URLSession.shared.data(for: request)
             guard let httpResponse = response as? HTTPURLResponse, (200...299).contains(httpResponse.statusCode),
                   let orgs = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]],
                   !orgs.isEmpty else {
-                return generateErrorResult(message: "Session Claude expirée")
+                return generateErrorResult(message: "Claude session expired")
             }
 
             // Check each organization for usage / extra_usage
             for org in orgs {
                 guard let orgId = org["uuid"] as? String else { continue }
-                let orgName = (org["name"] as? String) ?? "Organisation"
+                let orgName = (org["name"] as? String) ?? "Organization"
 
                 guard let usageUrl = URL(string: "https://claude.ai/api/organizations/\(orgId)/usage") else { continue }
                 var usageReq = URLRequest(url: usageUrl)
@@ -144,7 +144,7 @@ public final class ClaudeTracker {
                             outputTokens: 0,
                             cacheReadTokens: 0,
                             dailyCosts: [:],
-                            statusText: "Cycle du \(config.claudeBillingResetDay) • \(orgName) (\(String(format: "%.1f%%", pct)))",
+                            statusText: "Cycle starting on \(config.claudeBillingResetDay) • \(orgName) (\(String(format: "%.1f%%", pct)))",
                             isConfigured: true,
                             isOrgManaged: isEnt,
                             orgBadge: badge,
@@ -165,7 +165,7 @@ public final class ClaudeTracker {
                         outputTokens: 0,
                         cacheReadTokens: 0,
                         dailyCosts: [:],
-                        statusText: "Cycle du \(config.claudeBillingResetDay) • \(orgName) • Synchro auto",
+                        statusText: "Cycle starting on \(config.claudeBillingResetDay) • \(orgName) • Auto sync",
                         isConfigured: true,
                         isOrgManaged: isEnt,
                         orgBadge: badge,
@@ -181,7 +181,7 @@ public final class ClaudeTracker {
                         outputTokens: 0,
                         cacheReadTokens: 0,
                         dailyCosts: [:],
-                        statusText: "Cycle du \(config.claudeBillingResetDay) • \(orgName) • Synchro auto",
+                        statusText: "Cycle starting on \(config.claudeBillingResetDay) • \(orgName) • Auto sync",
                         isConfigured: true,
                         isOrgManaged: isEnt,
                         orgBadge: badge,
@@ -193,7 +193,7 @@ public final class ClaudeTracker {
             // Fall through to error result
         }
 
-        return generateErrorResult(message: "Connexion Claude impossible")
+        return generateErrorResult(message: "Claude connection failed")
     }
 
     private static func doubleValue(from any: Any?) -> Double? {
@@ -219,7 +219,7 @@ public final class ClaudeTracker {
         ]
 
         guard let url = components?.url else {
-            return generateErrorResult(message: "URL invalide")
+            return generateErrorResult(message: "Invalid URL")
         }
 
         var request = URLRequest(url: url)
@@ -236,7 +236,7 @@ public final class ClaudeTracker {
             guard let httpResponse = response as? HTTPURLResponse, (200...299).contains(httpResponse.statusCode),
                   let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
                   let dataArray = json["data"] as? [[String: Any]] else {
-                return generateErrorResult(message: "Erreur API")
+                return generateErrorResult(message: "API error")
             }
 
             var apiCost = 0.0
@@ -255,11 +255,11 @@ public final class ClaudeTracker {
                 statusText: "Admin API • \(formatCurrency(apiCost, symbol: config.currency))",
                 isConfigured: true,
                 isOrgManaged: isEnt,
-                orgBadge: isEnt ? "🏢 Entreprise" : "👤 Perso",
+                orgBadge: isEnt ? "🏢 Enterprise" : "👤 Personal",
                 isError: false
             )
         } catch {
-            return generateErrorResult(message: "Erreur réseau")
+            return generateErrorResult(message: "Network error")
         }
     }
 

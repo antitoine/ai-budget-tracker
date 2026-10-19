@@ -153,7 +153,7 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
             defer: false
         )
         window.center()
-        window.title = "Préférences AI Budget Tracker"
+        window.title = "AI Budget Tracker Preferences"
         window.contentViewController = NSHostingController(rootView: PreferencesView(manager: manager))
         window.isReleasedWhenClosed = false
 

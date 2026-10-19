@@ -50,7 +50,7 @@ public struct SidebarWidgetView: View {
                         .foregroundColor(.secondary)
                 }
                 .buttonStyle(PlainButtonStyle())
-                .help("Préférences")
+                .help("Preferences")
 
                 Button(action: onClose) {
                     Image(systemName: "xmark.circle.fill")
@@ -58,7 +58,7 @@ public struct SidebarWidgetView: View {
                         .foregroundColor(.secondary.opacity(0.7))
                 }
                 .buttonStyle(PlainButtonStyle())
-                .help("Fermer le widget")
+                .help("Close widget")
             }
             .padding(.horizontal, 16)
             .padding(.top, 14)
@@ -75,7 +75,7 @@ public struct SidebarWidgetView: View {
                             .font(.system(size: 26, weight: .bold, design: .rounded))
                             .foregroundColor(summary.isOverBudget ? .red : .primary)
 
-                        Text("sur \(String(format: "%.0f %@", summary.totalBudget, config.currency)) prévus")
+                        Text("of \(String(format: "%.0f %@", summary.totalBudget, config.currency)) budget")
                             .font(.system(size: 11))
                             .foregroundColor(.secondary)
                     }
@@ -87,7 +87,7 @@ public struct SidebarWidgetView: View {
                             .font(.system(size: 11, weight: .medium))
                             .foregroundColor(.secondary)
 
-                        Text("Reste: \(String(format: "%.2f %@", summary.remainingBudget, config.currency))")
+                        Text("Left: \(String(format: "%.2f %@", summary.remainingBudget, config.currency))")
                             .font(.system(size: 11, weight: .semibold))
                             .foregroundColor(summary.remainingBudget > 0 ? .green : .red)
                     }
@@ -116,7 +116,7 @@ public struct SidebarWidgetView: View {
                     .frame(height: 7)
 
                     HStack {
-                        Text(String(format: "%.1f%% consommé", summary.percentUsed))
+                        Text(String(format: "%.1f%% consumed", summary.percentUsed))
                             .font(.system(size: 10, weight: .medium))
                             .foregroundColor(summary.isOverBudget ? .red : (summary.isWarning ? .orange : .secondary))
                         Spacer()
@@ -148,7 +148,7 @@ public struct SidebarWidgetView: View {
                         Image(systemName: "arrow.clockwise")
                             .rotationEffect(.degrees(manager.isRefreshing ? 360 : 0))
                             .animation(manager.isRefreshing ? Animation.linear(duration: 1).repeatForever(autoreverses: false) : .default, value: manager.isRefreshing)
-                        Text(manager.isRefreshing ? "Actualisation..." : "Rafraîchir")
+                        Text(manager.isRefreshing ? "Refreshing..." : "Refresh")
                     }
                     .font(.system(size: 11))
                 }
@@ -158,7 +158,7 @@ public struct SidebarWidgetView: View {
 
                 Spacer()
 
-                Text("Positionné à droite de l'écran")
+                Text("Docked to right of screen")
                     .font(.system(size: 10))
                     .foregroundColor(.secondary.opacity(0.7))
             }

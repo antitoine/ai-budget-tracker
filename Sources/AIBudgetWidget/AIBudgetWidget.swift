@@ -5,8 +5,8 @@ import AppIntents
 // MARK: - Background Refresh AppIntent (keeps Notification Center open!)
 @available(macOS 14.0, *)
 struct RefreshBudgetIntent: AppIntent {
-    static var title: LocalizedStringResource = "Rafraîchir les budgets"
-    static var description = IntentDescription("Actualise les consommations et quotas sans fermer la barre des widgets.")
+    static var title: LocalizedStringResource = "Refresh Budgets"
+    static var description = IntentDescription("Refreshes usage and quotas without closing the widget bar.")
 
     func perform() async throws -> some IntentResult {
         let configDir = AppConfig.configDirectoryURL
@@ -74,7 +74,7 @@ struct BudgetTimelineProvider: TimelineProvider {
         let calendar = Calendar.current
         let today = Date()
         let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "fr_FR")
+        formatter.locale = Locale(identifier: "en_US")
         formatter.dateFormat = "MMMM yyyy"
 
         let cUsage = ServiceUsage(
@@ -83,7 +83,7 @@ struct BudgetTimelineProvider: TimelineProvider {
             budgetLimit: 30.0,
             requestCount: 265,
             requestLimit: 500,
-            statusText: "265/500 requêtes",
+            statusText: "265/500 requests",
             isConfigured: true
         )
 
@@ -91,16 +91,16 @@ struct BudgetTimelineProvider: TimelineProvider {
             service: .antigravity,
             cost: 0.0,
             budgetLimit: 35.0,
-            statusText: "Gemini: 96% (7j) / 97% (5h)",
+            statusText: "Gemini: 96% (7d) / 97% (5h)",
             isConfigured: true,
             isQuotaMode: true,
             quotaPrimaryText: "Gemini 97% • Argon 71%",
-            quotaSecondaryText: "Claude/GPT: 0% (5h) • 49% (7j)",
+            quotaSecondaryText: "Claude/GPT: 0% (5h) • 49% (7d)",
             quotaPercent: 29.0,
             quotaGroups: [
-                QuotaGroup(name: "Gemini", weeklyRemaining: 96, weeklyResetText: "6j 17h", fiveHourRemaining: 97, fiveHourResetText: "3h 19m"),
-                QuotaGroup(name: "Claude & GPT", weeklyRemaining: 49, weeklyResetText: "6j 22h", fiveHourRemaining: 0, fiveHourResetText: "3h 55m"),
-                QuotaGroup(name: "Gemini 4 Argon", weeklyRemaining: 71, weeklyResetText: "6j 17h")
+                QuotaGroup(name: "Gemini", weeklyRemaining: 96, weeklyResetText: "6d 17h", fiveHourRemaining: 97, fiveHourResetText: "3h 19m"),
+                QuotaGroup(name: "Claude & GPT", weeklyRemaining: 49, weeklyResetText: "6d 22h", fiveHourRemaining: 0, fiveHourResetText: "3h 55m"),
+                QuotaGroup(name: "Gemini 4 Argon", weeklyRemaining: 71, weeklyResetText: "6d 17h")
             ]
         )
 
@@ -116,7 +116,7 @@ struct BudgetTimelineProvider: TimelineProvider {
 
         let dayFormatter = DateFormatter()
         dayFormatter.dateFormat = "EEE"
-        dayFormatter.locale = Locale(identifier: "fr_FR")
+        dayFormatter.locale = Locale(identifier: "en_US")
 
         let daily: [DailyPoint] = (0..<7).reversed().compactMap { i in
             guard let d = calendar.date(byAdding: .day, value: -i, to: today) else { return nil }
@@ -199,7 +199,7 @@ struct MediumBudgetWidgetView: View {
                         .minimumScaleFactor(0.8)
                         .lineLimit(1)
 
-                    Text("sur \(String(format: "%.0f %@", summary.totalBudget, currency))")
+                    Text("of \(String(format: "%.0f %@", summary.totalBudget, currency))")
                         .font(.system(size: 10, weight: .medium))
                         .foregroundColor(.secondary)
                 }
@@ -219,7 +219,7 @@ struct MediumBudgetWidgetView: View {
                 }
                 .frame(height: 5)
 
-                Text(String(format: "%.1f%% consommé", summary.percentUsed))
+                Text(String(format: "%.1f%% consumed", summary.percentUsed))
                     .font(.system(size: 9, weight: .medium))
                     .foregroundColor(summary.isOverBudget ? .red : (summary.isWarning ? .orange : .secondary))
             }
@@ -247,7 +247,7 @@ struct MediumBudgetWidgetView: View {
                                 Spacer(minLength: 4)
 
                                 if s.isQuotaMode {
-                                    Text(s.quotaPrimaryText ?? String(format: "%.0f%% restant", s.remainingPercent))
+                                    Text(s.quotaPrimaryText ?? String(format: "%.0f%% remaining", s.remainingPercent))
                                         .font(.system(size: 9, weight: .bold, design: .rounded))
                                         .foregroundColor(s.isOverBudget ? .red : (s.isWarning ? .orange : s.service.brandColor))
                                         .lineLimit(1)
@@ -315,7 +315,7 @@ struct LargeBudgetWidgetView: View {
                 Button(intent: RefreshBudgetIntent()) {
                     HStack(spacing: 3) {
                         Image(systemName: "arrow.clockwise")
-                        Text("Rafraîchir")
+                        Text("Refresh")
                     }
                     .font(.system(size: 10, weight: .medium))
                     .padding(.horizontal, 7)
@@ -329,7 +329,7 @@ struct LargeBudgetWidgetView: View {
                 Link(destination: URL(string: "aibudgetbar://floating")!) {
                     HStack(spacing: 3) {
                         Image(systemName: "macwindow.on.rectangle")
-                        Text("Fenêtre")
+                        Text("Window")
                     }
                     .font(.system(size: 10, weight: .medium))
                     .padding(.horizontal, 7)
@@ -367,7 +367,7 @@ struct LargeBudgetWidgetView: View {
                     Text("Budget: \(String(format: "%.0f %@", summary.totalBudget, currency))")
                         .font(.system(size: 11))
                         .foregroundColor(.secondary)
-                    Text("Reste: \(String(format: "%.2f %@", summary.remainingBudget, currency))")
+                    Text("Left: \(String(format: "%.2f %@", summary.remainingBudget, currency))")
                         .font(.system(size: 11, weight: .semibold))
                         .foregroundColor(summary.remainingBudget > 0 ? .green : .red)
                 }
@@ -440,11 +440,11 @@ struct LargeBudgetWidgetView: View {
                                 if !s.isQuotaMode || s.quotaGroups.isEmpty {
                                     VStack(alignment: .trailing, spacing: 1.5) {
                                         if s.isQuotaMode {
-                                            Text(s.quotaPrimaryText ?? String(format: "%.0f%% restant", s.remainingPercent))
+                                            Text(s.quotaPrimaryText ?? String(format: "%.0f%% remaining", s.remainingPercent))
                                                 .font(.system(size: 11, weight: .bold, design: .rounded))
                                                 .foregroundColor(s.isOverBudget ? .red : (s.isWarning ? .orange : s.service.brandColor))
                                                 .lineLimit(1)
-                                            Text(s.quotaSecondaryText ?? "Quota disponible")
+                                            Text(s.quotaSecondaryText ?? "Available quota")
                                                 .font(.system(size: 9))
                                                 .foregroundColor(.secondary)
                                                 .lineLimit(1)
@@ -460,7 +460,7 @@ struct LargeBudgetWidgetView: View {
                                         }
                                     }
                                 } else {
-                                    Text("Temps réel")
+                                    Text("Real-time")
                                         .font(.system(size: 9, weight: .medium))
                                         .foregroundColor(.secondary)
                                         .lineLimit(1)
@@ -487,7 +487,7 @@ struct LargeBudgetWidgetView: View {
 
                                             if let w = grp.weeklyRemaining {
                                                 HStack(spacing: 3) {
-                                                    Text("Hebdo:")
+                                                    Text("Weekly:")
                                                         .font(.system(size: 9.5))
                                                         .foregroundColor(.secondary)
                                                     Text("\(Int(w.rounded()))%")
@@ -559,7 +559,7 @@ struct AIBudgetWidget: Widget {
             AIBudgetWidgetEntryView(entry: entry)
         }
         .configurationDisplayName("AI Budget Tracker")
-        .description("Suivez en direct vos dépenses et quotas Cursor, Antigravity et Claude.")
+        .description("Track your Cursor, Antigravity, and Claude spend and quotas in real-time.")
         .supportedFamilies([.systemMedium, .systemLarge])
     }
 }

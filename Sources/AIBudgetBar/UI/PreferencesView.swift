@@ -17,8 +17,8 @@ public struct PreferencesView: View {
             // Tabs Bar
             Picker("", selection: $selectedTab) {
                 Text("Services & Cycles").tag(0)
-                Text("Plafonds Budgétaires").tag(1)
-                Text("Général").tag(2)
+                Text("Budget Limits").tag(1)
+                Text("General").tag(2)
             }
             .pickerStyle(SegmentedPickerStyle())
             .padding(.horizontal, 20)
@@ -54,13 +54,13 @@ public struct PreferencesView: View {
 
                 Spacer()
 
-                Button("Fermer") {
+                Button("Close") {
                     NSApplication.shared.keyWindow?.close()
                 }
 
-                Button("Enregistrer et actualiser") {
+                Button("Save and Refresh") {
                     manager.updateConfig(config)
-                    saveStatusMessage = "Configuration enregistrée !"
+                    saveStatusMessage = "Configuration saved!"
                     DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
                         saveStatusMessage = nil
                     }
@@ -92,8 +92,8 @@ public struct PreferencesView: View {
                         .font(.headline)
                     Spacer()
                     Picker("", selection: enterpriseBinding(for: .cursor)) {
-                        Text("🏢 Entreprise").tag(true)
-                        Text("👤 Forfait (Quotas)").tag(false)
+                        Text("🏢 Enterprise").tag(true)
+                        Text("👤 Plan (Quotas)").tag(false)
                     }
                     .pickerStyle(SegmentedPickerStyle())
                     .frame(width: 210)
@@ -101,25 +101,25 @@ public struct PreferencesView: View {
 
                 if config.isEnterprise(service: .cursor) {
                     HStack {
-                        Text("Jour de réinitialisation du cycle mensuel :")
+                        Text("Monthly billing cycle reset day:")
                             .font(.subheadline)
                         Spacer()
                         TextField("16", value: $config.cursorBillingResetDay, format: .number)
                             .textFieldStyle(RoundedBorderTextFieldStyle())
                             .frame(width: 50)
-                        Text("du mois")
+                        Text("of the month")
                             .font(.caption)
                     }
                 }
 
-                Text("Cookie de session (WorkosCursorSessionToken) :")
+                Text("Session cookie (WorkosCursorSessionToken):")
                     .font(.caption)
                     .foregroundColor(.secondary)
 
-                SecureField("Collez votre WorkosCursorSessionToken", text: $config.cursorSessionToken)
+                SecureField("Paste your WorkosCursorSessionToken", text: $config.cursorSessionToken)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
 
-                Text("✓ Synchronisation automatique via l'export CSV Cursor (Team #\(config.cursorTeamId)).")
+                Text("✓ Automatic synchronization via Cursor CSV export (Team #\(config.cursorTeamId)).")
                     .font(.system(size: 10))
                     .foregroundColor(.green)
             }
@@ -135,8 +135,8 @@ public struct PreferencesView: View {
                         .font(.headline)
                     Spacer()
                     Picker("", selection: enterpriseBinding(for: .claude)) {
-                        Text("🏢 Entreprise").tag(true)
-                        Text("👤 Forfait (Quotas)").tag(false)
+                        Text("🏢 Enterprise").tag(true)
+                        Text("👤 Plan (Quotas)").tag(false)
                     }
                     .pickerStyle(SegmentedPickerStyle())
                     .frame(width: 210)
@@ -144,18 +144,18 @@ public struct PreferencesView: View {
 
                 if config.isEnterprise(service: .claude) {
                     HStack {
-                        Text("Jour de réinitialisation du cycle mensuel :")
+                        Text("Monthly billing cycle reset day:")
                             .font(.subheadline)
                         Spacer()
                         TextField("1", value: $config.claudeBillingResetDay, format: .number)
                             .textFieldStyle(RoundedBorderTextFieldStyle())
                             .frame(width: 50)
-                        Text("du mois")
+                        Text("of the month")
                             .font(.caption)
                     }
                 }
 
-                Text("Cookie sessionKey claude.ai (synchronisation 100% automatique) :")
+                Text("claude.ai sessionKey cookie (100% automatic synchronization):")
                     .font(.caption)
                     .foregroundColor(.secondary)
 
@@ -163,12 +163,12 @@ public struct PreferencesView: View {
                     .textFieldStyle(RoundedBorderTextFieldStyle())
 
                 if !config.claudeSessionCookie.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                    Text("✓ Synchronisation automatique active avec claude.ai/settings/usage.")
+                    Text("✓ Automatic synchronization active with claude.ai/settings/usage.")
                         .font(.system(size: 10))
                         .foregroundColor(.green)
                 } else {
                     HStack {
-                        Text("Ou montant manuel de secours :")
+                        Text("Or fallback manual amount:")
                             .font(.caption)
                             .foregroundColor(.secondary)
                         Spacer()
@@ -195,8 +195,8 @@ public struct PreferencesView: View {
                         .font(.headline)
                     Spacer()
                     Picker("", selection: enterpriseBinding(for: .antigravity)) {
-                        Text("🏢 Entreprise").tag(true)
-                        Text("👤 Forfait (Quotas)").tag(false)
+                        Text("🏢 Enterprise").tag(true)
+                        Text("👤 Plan (Quotas)").tag(false)
                     }
                     .pickerStyle(SegmentedPickerStyle())
                     .frame(width: 210)
@@ -204,23 +204,23 @@ public struct PreferencesView: View {
 
                 if config.isEnterprise(service: .antigravity) {
                     HStack {
-                        Text("Jour de réinitialisation du cycle mensuel :")
+                        Text("Monthly billing cycle reset day:")
                             .font(.subheadline)
                         Spacer()
                         TextField("18", value: $config.antigravityBillingResetDay, format: .number)
                             .textFieldStyle(RoundedBorderTextFieldStyle())
                             .frame(width: 50)
-                        Text("du mois")
+                        Text("of the month")
                             .font(.caption)
                     }
                 }
 
-                Toggle("Scanner automatiquement l'activité locale (~/.gemini/antigravity/brain)", isOn: $config.antigravityScanBrainDir)
+                Toggle("Automatically scan local activity (~/.gemini/antigravity/brain)", isOn: $config.antigravityScanBrainDir)
                     .font(.caption)
 
                 Text(config.isEnterprise(service: .antigravity)
-                     ? "✓ Mode Entreprise : coût estimé inclus dans le budget global."
-                     : "✓ Mode Forfait Personnel : affiche uniquement le % de quota restant sur fenêtre glissante (sans cycle mensuel ni montant $).")
+                     ? "✓ Enterprise Mode: estimated cost included in global budget."
+                     : "✓ Personal Plan Mode: displays only remaining quota % on a rolling window (no monthly cycle or $ amount).")
                     .font(.system(size: 10))
                     .foregroundColor(.green)
             }
@@ -234,7 +234,7 @@ public struct PreferencesView: View {
         VStack(alignment: .leading, spacing: 16) {
             // Currency
             HStack {
-                Text("Devise d'affichage :")
+                Text("Display currency:")
                     .font(.subheadline)
                 Spacer()
                 Picker("", selection: $config.currency) {
@@ -251,7 +251,7 @@ public struct PreferencesView: View {
             // Global Enterprise Monthly Budget (Free-form text field)
             VStack(alignment: .leading, spacing: 6) {
                 HStack {
-                    Text("Budget Global Mensuel Entreprise (champ libre) :")
+                    Text("Global Monthly Enterprise Budget (custom field):")
                         .font(.subheadline)
                         .fontWeight(.bold)
                     Spacer()
@@ -262,7 +262,7 @@ public struct PreferencesView: View {
                     Text(config.currency)
                         .font(.caption)
                 }
-                Text("Enveloppe globale allouée par votre entreprise (en plus des plafonds max de chaque outil). Seuls les outils marqués « 🏢 Entreprise » sont comptabilisés dans ce total.")
+                Text("Global budget allocated by your company (in addition to per-tool max limits). Only tools marked \"🏢 Enterprise\" are counted in this total.")
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
@@ -270,26 +270,26 @@ public struct PreferencesView: View {
             Divider()
 
             // Per-Service Maximum Limits (only for Enterprise services)
-            Text("Limites maximum par outil (🏢 Entreprise — champs libres) :")
+            Text("Maximum limits per tool (🏢 Enterprise — custom fields):")
                 .font(.subheadline)
                 .fontWeight(.bold)
 
             if config.isEnterprise(service: .cursor) {
-                freeBudgetRow(service: .cursor, title: "Cursor — Plafond max (Réinit. le \(config.cursorBillingResetDay)) :", binding: Binding(
+                freeBudgetRow(service: .cursor, title: "Cursor — Max limit (Resets on \(config.cursorBillingResetDay)):", binding: Binding(
                     get: { config.serviceBudgets[AIService.cursor.rawValue] ?? 2000.0 },
                     set: { config.serviceBudgets[AIService.cursor.rawValue] = $0 }
                 ))
             }
 
             if config.isEnterprise(service: .claude) {
-                freeBudgetRow(service: .claude, title: "Claude — Plafond max (Réinit. le \(config.claudeBillingResetDay)er) :", binding: Binding(
+                freeBudgetRow(service: .claude, title: "Claude — Max limit (Resets on \(config.claudeBillingResetDay)):", binding: Binding(
                     get: { config.serviceBudgets[AIService.claude.rawValue] ?? 2000.0 },
                     set: { config.serviceBudgets[AIService.claude.rawValue] = $0 }
                 ))
             }
 
             if config.isEnterprise(service: .antigravity) {
-                freeBudgetRow(service: .antigravity, title: "Antigravity — Plafond max (Réinit. le \(config.antigravityBillingResetDay)) :", binding: Binding(
+                freeBudgetRow(service: .antigravity, title: "Antigravity — Max limit (Resets on \(config.antigravityBillingResetDay)):", binding: Binding(
                     get: { config.serviceBudgets[AIService.antigravity.rawValue] ?? 200.0 },
                     set: { config.serviceBudgets[AIService.antigravity.rawValue] = $0 }
                 ))
@@ -301,7 +301,7 @@ public struct PreferencesView: View {
                 HStack(spacing: 6) {
                     Image(systemName: "checkmark.seal.fill")
                         .foregroundColor(.purple)
-                    Text("\(names) est en mode Forfait à quotas : le % restant est calculé automatiquement (aucun plafond ni cycle mensuel à saisir).")
+                    Text("\(names) is in Quota Plan mode: remaining % is calculated automatically (no limit or monthly cycle required).")
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
@@ -312,20 +312,20 @@ public struct PreferencesView: View {
             Divider()
 
             // Notifications
-            Text("Alertes de notifications macOS :")
+            Text("macOS notification alerts:")
                 .font(.subheadline)
                 .fontWeight(.medium)
 
             HStack(spacing: 20) {
-                Toggle("À 50% du budget", isOn: Binding(
+                Toggle("At 50% of budget", isOn: Binding(
                     get: { config.alertThresholds.contains(0.50) },
                     set: { on in toggleThreshold(0.50, on: on) }
                 ))
-                Toggle("À 80% du budget", isOn: Binding(
+                Toggle("At 80% of budget", isOn: Binding(
                     get: { config.alertThresholds.contains(0.80) },
                     set: { on in toggleThreshold(0.80, on: on) }
                 ))
-                Toggle("À 100% (Dépassé)", isOn: Binding(
+                Toggle("At 100% (Exceeded)", isOn: Binding(
                     get: { config.alertThresholds.contains(1.00) },
                     set: { on in toggleThreshold(1.00, on: on) }
                 ))
@@ -365,10 +365,10 @@ public struct PreferencesView: View {
     private var generalTab: some View {
         VStack(alignment: .leading, spacing: 16) {
             VStack(alignment: .leading, spacing: 6) {
-                Toggle("Afficher le widget à droite de l'écran au démarrage", isOn: $config.showSidebarWidgetOnLaunch)
+                Toggle("Show widget on the right side of the screen on launch", isOn: $config.showSidebarWidgetOnLaunch)
                     .font(.subheadline)
                     .fontWeight(.medium)
-                Text("Place automatiquement le widget translucide à droite de votre écran (zone des notifications).")
+                Text("Automatically places the translucent widget on the right side of your screen (notification area).")
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
@@ -376,14 +376,14 @@ public struct PreferencesView: View {
             Divider()
 
             HStack {
-                Text("Intervalle d'actualisation automatique :")
+                Text("Automatic refresh interval:")
                     .font(.subheadline)
                 Spacer()
                 Picker("", selection: $config.refreshIntervalMinutes) {
-                    Text("Toutes les 5 min").tag(5)
-                    Text("Toutes les 15 min").tag(15)
-                    Text("Toutes les 30 min").tag(30)
-                    Text("Toutes les heures").tag(60)
+                    Text("Every 5 min").tag(5)
+                    Text("Every 15 min").tag(15)
+                    Text("Every 30 min").tag(30)
+                    Text("Every hour").tag(60)
                 }
                 .frame(width: 160)
             }
@@ -391,7 +391,7 @@ public struct PreferencesView: View {
             Divider()
 
             VStack(alignment: .leading, spacing: 8) {
-                Text("Fichier de configuration :")
+                Text("Configuration file:")
                     .font(.subheadline)
 
                 Text(AppConfig.configFileURL.path)
@@ -399,7 +399,7 @@ public struct PreferencesView: View {
                     .foregroundColor(.secondary)
                     .textSelection(.enabled)
 
-                Button("Révéler dans le Finder") {
+                Button("Reveal in Finder") {
                     NSWorkspace.shared.selectFile(AppConfig.configFileURL.path, inFileViewerRootedAtPath: AppConfig.configDirectoryURL.path)
                 }
             }

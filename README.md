@@ -1,9 +1,9 @@
-# ✦ AI Budget Tracker & Widgets pour macOS
+# ✦ AI Budget Tracker & Widgets for macOS
 
-**AI Budget Tracker** permet de **suivre en temps réel l'évolution de vos dépenses et consommations IA** à travers **Cursor**, **Antigravity** et **Claude**, avec **deux formats de widgets dédiés à la zone droite de votre écran (Notifications & Bureau)** :
+**AI Budget Tracker** allows you to **track your AI spending and usage in real time** across **Cursor**, **Antigravity**, and **Claude**, with **two widget formats dedicated to the right side of your screen (Notifications & Desktop)**:
 
-1. 📱 **Le Widget Apple Officiel (WidgetKit)** : directement intégré dans le **Centre de notifications macOS** (panneau latéral droit) et positionnable sur votre bureau.
-2. 🪟 **Le Widget Flottant Latéral** : une carte en verre dépoli ultra-élégante qui se docke automatiquement sur le bord droit de votre écran, parfaite si votre barre des menus est encombrée !
+1. 📱 **Official Apple Widget (WidgetKit)**: directly integrated into the **macOS Notification Center** (right sidebar) and placeable on your desktop.
+2. 🪟 **Floating Sidebar Widget**: an ultra-sleek frosted glass card that automatically docks to the right edge of your screen, perfect if your menu bar is crowded!
 
 ![AI Budget Bar macOS](https://img.shields.io/badge/Platform-macOS%2014.0%2B-blue?logo=apple)
 ![Swift](https://img.shields.io/badge/Swift-6.0-orange?logo=swift)
@@ -12,129 +12,133 @@
 
 ---
 
-## 📸 Aperçu du Widget Latéral (Zone Notifications à droite)
+## 📸 Sidebar Widget Preview (Right Notification Area)
 
 ```text
                                         ┌───────────────────────────────┐
                                         │ ✨ AI Budget Widget      ⚙️ ⨉ │
                                         ├───────────────────────────────┤
-                                        │ 42,80 €       Octobre 2026    │
-                                        │ sur 100 €     Reste: 57,20 €  │
+                                        │ $42.80        October 2026    │
+                                        │ of $100       Left: $57.20    │
                                         │ [██████████░░░░░░] 42.8%      │
                                         ├───────────────────────────────┤
-                                        │ [</>] Cursor       21,60 € ↗  │
-                                        │       265 / 500 requêtes      │
-                                        │ [✨]  Antigravity  11,45 € ↗  │
+                                        │ [</>] Cursor        $21.60 ↗  │
+                                        │       265 / 500 requests      │
+                                        │ [✨]  Antigravity   $11.45 ↗  │
                                         │       14 sessions (172k tok)  │
-                                        │ [💬]  Claude       14,80 € ↗  │
+                                        │ [💬]  Claude        $14.80 ↗  │
                                         │       Sonnet 3.5 & 3.7        │
                                         ├───────────────────────────────┤
-                                        │ 📊 Évolution sur 7 jours      │
+                                        │ 📊 7-Day Trend                │
                                         │     █    █         █          │
                                         │   █ █  █ █   █   █ █          │
-                                        │  Lun Mar Mer Jeu Ven Sam Dim  │
+                                        │  Mon Tue Wed Thu Fri Sat Sun  │
                                         ├───────────────────────────────┤
-                                        │ 🔄 Rafraîchir  (Bord droit)   │
+                                        │ 🔄 Refresh  (Right Edge)      │
                                         └───────────────────────────────┘
 ```
 
 ---
 
-## ✨ Fonctionnalités Clés
+## ✨ Key Features
 
-1. **Intégration macOS native sans Dock (`LSUIElement`)** :
-   - Se loge discrètement dans la barre des menus en haut de l'écran.
-   - Affiche en direct le total du mois (`✨ 42.80 €`).
-   - L'icône s'adapte automatiquement (vert/neutre sous le budget, orange à l'approche, rouge en cas de dépassement).
+1. **Native Dock-less macOS Integration (`LSUIElement`)**:
+   - Sits discreetly in the menu bar at the top of the screen.
+   - Displays monthly total in real time (`✨ $42.80`).
+   - The icon automatically adapts (green/neutral below budget, orange approaching threshold, red if exceeded).
 
-2. **Connexion 100% automatique aux 3 services** :
-   - **Cursor** :
-     - Supporte le cookie de session `WorkosCursorSessionToken` (récupère le compteur exact des requêtes rapides et du coût mensuel).
-     - Supporte également les clés d'API Admin d'équipe (`api.cursor.com`).
-     - Prise en compte du forfait fixe Pro (20 $/mois) + dépassements d'usage.
-   - **Antigravity** :
-     - **Scanneur local en temps réel** : analyse directement les journaux de sessions et transcripts locaux (`~/.gemini/antigravity/brain/*/transcript.jsonl`).
-     - Calcule avec précision les tokens entrants, sortants et en cache (Gemini 2.5/3.8 Flash & Pro) et déduit le coût réel.
-   - **Claude (Anthropic)** :
-     - Se connecte à l'API Admin de facturation Anthropic (`/v1/organizations/cost_report` et `usage_report/messages`).
-     - Prend en charge le forfait fixe Claude Pro mensuel si souhaité.
+2. **100% Automatic Connection to the 3 Services**:
+   - **Cursor**:
+     - Supports the `WorkosCursorSessionToken` session cookie (retrieves exact fast request counts and monthly cost).
+     - Also supports Team Admin API keys (`api.cursor.com`).
+     - Accounts for fixed Pro plan ($20/month) + usage-based overages.
+   - **Antigravity**:
+     - **Real-time local scanner**: directly parses local session logs and transcripts (`~/.gemini/antigravity/brain/*/transcript.jsonl`).
+     - Accurately tracks input, output, and cached tokens (Gemini 2.5/3.8 Flash & Pro) and calculates real cost.
+   - **Claude (Anthropic)**:
+     - Connects to Anthropic billing Admin API (`/v1/organizations/cost_report` and `usage_report/messages`).
+     - Supports monthly Claude Pro fixed plan if desired.
 
-3. **Graphique d'évolution sur 7 jours** :
-   - Mini diagramme à barres empilées montrant l'effort budgétaire de chaque outil au jour le jour.
+3. **7-Day Trend Chart**:
+   - Mini stacked bar chart showing day-by-day budget expenditure for each tool.
 
-4. **Alertes de seuils intelligentes** :
-   - Notifications système macOS automatiques lors du franchissement de 50%, 80% ou 100% de votre enveloppe budgétaire.
+4. **Smart Threshold Alerts**:
+   - Automatic macOS system notifications when crossing 50%, 80%, or 100% of your budget limit.
 
-5. **Double usage : Application Barre de Menus & Outil CLI** :
-   - Peut être interrogé directement depuis le terminal (`AIBudgetBar --status` ou `AIBudgetBar --json`).
+5. **Dual Mode: Menu Bar App & CLI Tool**:
+   - Queryable directly from the terminal (`AIBudgetBar --status` or `AIBudgetBar --json`).
 
 ---
 
-## 🚀 Installation & Lancement
+## 🚀 Installation & Launch
 
-### Méthode rapide (1 commande) :
-Dans le dossier du projet, exécutez simplement :
+### Quick method (1 command):
+From the project folder, simply run:
 
 ```bash
 make install
 ```
 
-Cette commande compile l'application, l'installe dans `~/Applications/AIBudgetBar.app` et la lance immédiatement ! L'icône apparaît instantanément dans votre barre des menus.
+This command compiles the application, installs it into `~/Applications/AIBudgetBar.app`, and launches it immediately! The icon appears instantly in your menu bar.
 
-### Autres commandes utiles :
+### Other useful commands:
 ```bash
-make build    # Compile l'application dans ./build/AIBudgetBar.app
-make status   # Affiche le récapitulatif directement dans le terminal
-make json     # Exporte le résumé au format JSON
-make clean    # Nettoie les fichiers de compilation
+make build    # Compiles the application into ./build/AIBudgetBar.app
+make status   # Displays the budget summary directly in the terminal
+make json     # Exports the summary in JSON format
+make clean    # Removes compilation artifacts
 ```
 
 ---
 
-## ⚙️ Configuration des Clés & Services
+## ⚙️ Configuring Keys & Services
 
-Pour configurer vos accès, cliquez sur l'icône dans la barre des menus puis sur **⚙️ Préférences** (ou modifiez directement `~/.config/ai-budget-bar/config.json`) :
+To configure your credentials, click the menu bar icon and select **⚙️ Preferences** (or directly edit `~/.config/ai-budget-bar/config.json`):
 
 ### 1. Cursor
-- Rendez-vous sur [cursor.com/dashboard](https://www.cursor.com/dashboard)
-- Ouvrez les Outils de développement du navigateur (`F12` ou `Inspecter`) > Onglet **Application** / **Stockage** > **Cookies** > `https://www.cursor.com`
-- Copiez la valeur du cookie `WorkosCursorSessionToken` et collez-la dans les Préférences.
+- Go to [cursor.com/dashboard](https://www.cursor.com/dashboard)
+- Open browser Developer Tools (`F12` or `Inspect`) > **Application** / **Storage** tab > **Cookies** > `https://www.cursor.com`
+- Copy the `WorkosCursorSessionToken` cookie value and paste it into Preferences.
 
 ### 2. Antigravity
-- Activé par défaut ! Le tracker local lit automatiquement vos sessions actives dans `~/.gemini/antigravity/brain`. Aucune clé requise.
+- Enabled by default! The local tracker automatically scans your active sessions in `~/.gemini/antigravity/brain`. No API key required.
 
 ### 3. Claude (Anthropic)
-- Rendez-vous sur [console.anthropic.com/settings/keys](https://console.anthropic.com/settings/keys)
-- Créez ou copiez une clé d'administration de type `sk-ant-admin...` (nécessaire pour accéder aux rapports de coûts de l'organisation).
+- Go to [console.anthropic.com/settings/keys](https://console.anthropic.com/settings/keys)
+- Create or copy an Admin key starting with `sk-ant-admin...` (required to access organization cost reports).
 
 ---
 
-## 📁 Structure du Projet
+## 📁 Project Structure
 
 ```text
 .
-├── Makefile                     # Cibles make build, install, status
-├── Package.swift                # Manifeste Swift Package
-├── README.md                    # Documentation complète
+├── Makefile                     # Make targets: build, install, status, clean
+├── Package.swift                # Swift Package manifest
+├── README.md                    # Complete documentation
 ├── Scripts/
-│   ├── build.sh                 # Script de compilation et packaging .app
-│   └── install.sh               # Installation dans ~/Applications & lancement
+│   ├── build.sh                 # Build and .app packaging script
+│   └── install.sh               # Install into ~/Applications & launch
 └── Sources/
-    └── AIBudgetBar/
-        ├── AppDelegate.swift    # Gestion du NSStatusItem, NSPopover et fenêtres
-        ├── main.swift           # Point d'entrée CLI et GUI
-        ├── Models/
-        │   ├── AIService.swift    # Définition des services, couleurs, icônes
-        │   ├── AppConfig.swift    # Persistance (~/.config/ai-budget-bar/config.json)
-        │   └── ServiceUsage.swift # Modèles de consommation et historiques
-        ├── Services/
-        │   ├── AntigravityTracker.swift # Scanneur local de transcripts ~/.gemini
-        │   ├── BudgetManager.swift      # Coordination, notifications et cache
-        │   ├── ClaudeTracker.swift      # Client Anthropic Admin Cost Report API
-        │   └── CursorTracker.swift      # Client Cursor API et cookies de session
-        └── UI/
-            ├── HistoryChartView.swift   # Graphique empilé 7 jours
-            ├── PopoverView.swift        # Vue popover principale macOS
-            ├── PreferencesView.swift    # Fenêtre complète des réglages
-            └── ServiceRowView.swift     # Carte détaillée pour chaque service
+    ├── AIBudgetBar/
+    │   ├── AppDelegate.swift    # NSStatusItem, NSPopover and window management
+    │   ├── main.swift           # CLI and GUI entry point
+    │   ├── Models/
+    │   │   ├── AIService.swift    # Service definitions, colors, icons
+    │   │   ├── AppConfig.swift    # Persistence (~/.config/ai-budget-bar/config.json)
+    │   │   └── ServiceUsage.swift # Consumption models and history
+    │   ├── Services/
+    │   │   ├── AntigravityTracker.swift # Local ~/.gemini transcript scanner
+    │   │   ├── BudgetManager.swift      # Coordination, notifications, and cache
+    │   │   ├── ClaudeTracker.swift      # Anthropic Admin Cost Report API client
+    │   │   └── CursorTracker.swift      # Cursor API client and session cookies
+    │   └── UI/
+    │       ├── HistoryChartView.swift   # 7-day stacked bar chart
+    │       ├── PopoverView.swift        # Main macOS popover view
+    │       ├── PreferencesView.swift    # Settings window
+    │       ├── ServiceRowView.swift     # Detailed card for each service
+    │       ├── SidebarWidgetController.swift # Floating sidebar window controller
+    │       └── SidebarWidgetView.swift  # Floating sidebar widget view
+    └── AIBudgetWidget/
+        └── AIBudgetWidget.swift         # macOS Notification Center WidgetKit extension
 ```

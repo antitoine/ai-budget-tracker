@@ -19,7 +19,7 @@ public struct HistoryChartView: View {
     public var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 6) {
-                Text("Évolution (7 jours)")
+                Text("Trend (7 days)")
                     .font(.system(size: 11, weight: .semibold))
                     .foregroundColor(.secondary)
                     .lineLimit(1)

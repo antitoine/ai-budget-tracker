@@ -72,12 +72,12 @@ public struct ServiceRowView: View {
                 if !(usage.isQuotaMode && !usage.quotaGroups.isEmpty) {
                     VStack(alignment: .trailing, spacing: 1) {
                         if usage.isQuotaMode {
-                            Text(usage.quotaPrimaryText ?? String(format: "%.0f%% restant", usage.remainingPercent))
+                            Text(usage.quotaPrimaryText ?? String(format: "%.0f%% remaining", usage.remainingPercent))
                                 .font(.system(size: 12, weight: .bold, design: .rounded))
                                 .foregroundColor(usage.isOverBudget ? .red : (usage.isWarning ? .orange : usage.service.brandColor))
                                 .lineLimit(1)
 
-                            Text(usage.quotaSecondaryText ?? "Quota disponible")
+                            Text(usage.quotaSecondaryText ?? "Available quota")
                                 .font(.system(size: 9))
                                 .foregroundColor(.secondary)
                                 .lineLimit(1)
@@ -116,7 +116,7 @@ public struct ServiceRowView: View {
 
                             if let w = grp.weeklyRemaining {
                                 HStack(spacing: 3) {
-                                    Text("7j:")
+                                    Text("7d:")
                                         .font(.system(size: 9))
                                         .foregroundColor(.secondary)
                                     Text(String(format: "%.0f%%", w))
@@ -175,14 +175,14 @@ public struct ServiceRowView: View {
                 // Bottom details row
                 HStack {
                     if usage.isQuotaMode {
-                        Text(usage.statusDetails.isEmpty ? "Fenêtre glissante • Actualisé auto" : usage.statusDetails)
+                        Text(usage.statusDetails.isEmpty ? "Rolling window • Auto-refreshed" : usage.statusDetails)
                             .font(.system(size: 9))
                             .foregroundColor(.secondary)
                             .lineLimit(1)
 
                         Spacer()
 
-                        Text(String(format: "%.0f%% disponible (%.0f%% utilisé)", usage.remainingPercent, usage.percentUsed))
+                        Text(String(format: "%.0f%% available (%.0f%% used)", usage.remainingPercent, usage.percentUsed))
                             .font(.system(size: 9, weight: .medium))
                             .foregroundColor(usage.isOverBudget ? .red : (usage.isWarning ? .orange : .secondary))
                     } else {
@@ -197,7 +197,7 @@ public struct ServiceRowView: View {
                                 .foregroundColor(.secondary)
                                 .lineLimit(1)
                         } else if usage.requestCount > 0 {
-                            Text("\(usage.requestCount) événements ce cycle")
+                            Text("\(usage.requestCount) events this cycle")
                                 .font(.system(size: 9))
                                 .foregroundColor(.secondary)
                                 .lineLimit(1)
@@ -211,7 +211,7 @@ public struct ServiceRowView: View {
                                 .foregroundColor(.secondary)
                         }
 
-                        Text(String(format: "%.1f%% consommé", usage.percentUsed))
+                        Text(String(format: "%.1f%% consumed", usage.percentUsed))
                             .font(.system(size: 9, weight: .medium))
                             .foregroundColor(usage.isOverBudget ? .red : (usage.isWarning ? .orange : .secondary))
                     }
@@ -239,7 +239,7 @@ public struct ServiceRowView: View {
         .onTapGesture {
             NSWorkspace.shared.open(usage.service.dashboardURL)
         }
-        .help("Cliquer pour ouvrir la page d'usage \(usage.service.displayName)")
+        .help("Click to open \(usage.service.displayName) usage page")
     }
 
     private func formatCompact(_ number: Int) -> String {

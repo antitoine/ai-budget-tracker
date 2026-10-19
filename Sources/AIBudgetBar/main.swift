@@ -5,15 +5,15 @@ let args = CommandLine.arguments
 
 if args.contains("--help") || args.contains("-h") {
     print("""
-    AI Budget Bar - Suivi de budget Cursor, Antigravity et Claude sur macOS
+    AI Budget Bar - Cursor, Antigravity, and Claude budget tracking on macOS
 
     Usage:
-      AIBudgetBar             Lance l'application et affiche le widget
-      AIBudgetBar --widget    Affiche le widget flottant à droite de l'écran
-      AIBudgetBar --status    Affiche le récapitulatif des budgets dans le terminal
-      AIBudgetBar --json      Exporte le récapitulatif actuel au format JSON
-      AIBudgetBar --config    Affiche le chemin du fichier de configuration
-      AIBudgetBar --help      Affiche cette aide
+      AIBudgetBar             Launch the application and display the widget
+      AIBudgetBar --widget    Display the floating widget on the right side of the screen
+      AIBudgetBar --status    Display the budget summary in the terminal
+      AIBudgetBar --json      Export the current summary in JSON format
+      AIBudgetBar --config    Display configuration file path
+      AIBudgetBar --help      Show this help
     """)
     exit(0)
 }
@@ -32,13 +32,13 @@ _ = MainActor.assumeIsolated {
             let cfg = manager.config
 
             print("\n================ AI BUDGET BAR ================")
-            print("Mois : \(sum.monthName)")
-            print(String(format: "Total consommé : %.2f %@ / %.2f %@ (%.1f%%)", sum.totalCost, cfg.currency, sum.totalBudget, cfg.currency, sum.percentUsed))
+            print("Month: \(sum.monthName)")
+            print(String(format: "Total consumed: %.2f %@ / %.2f %@ (%.1f%%)", sum.totalCost, cfg.currency, sum.totalBudget, cfg.currency, sum.percentUsed))
             print("-----------------------------------------------")
             for s in sum.services {
                 if s.isQuotaMode {
                     let qStr = s.quotaPrimaryText ?? "Quotas"
-                    let qLim = s.quotaSecondaryText ?? "Forfait Perso"
+                    let qLim = s.quotaSecondaryText ?? "Personal Plan"
                     print("• \(s.service.displayName.padding(toLength: 12, withPad: " ", startingAt: 0)) : \(qStr.padding(toLength: 10, withPad: " ", startingAt: 0)) (\(qLim)) - \(s.statusText)")
                 } else {
                     let limitStr = String(format: "%.2f %@", s.budgetLimit, cfg.currency)

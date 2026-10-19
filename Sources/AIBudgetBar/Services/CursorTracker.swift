@@ -25,7 +25,7 @@ public final class CursorTracker {
         guard !token.isEmpty else {
             return CursorResult(
                 cost: 0, requestCount: 0, requestLimit: nil, dailyCosts: [:],
-                statusText: "Cookie WorkosCursorSessionToken requis",
+                statusText: "WorkosCursorSessionToken cookie required",
                 isConfigured: false, isOrgManaged: false, orgBadge: nil, isError: false
             )
         }
@@ -46,7 +46,7 @@ public final class CursorTracker {
         let urlString = "https://cursor.com/api/dashboard/export-usage-events-csv"
             + "?teamId=\(teamId)&isEnterprise=false&startDate=\(startMs)&endDate=\(endMs)&strategy=tokens"
         guard let url = URL(string: urlString) else {
-            return errorResult("URL d'export invalide")
+            return errorResult("Invalid export URL")
         }
 
         var request = URLRequest(url: url)
@@ -60,13 +60,13 @@ public final class CursorTracker {
             let (data, response) = try await URLSession.shared.data(for: request)
             let status = (response as? HTTPURLResponse)?.statusCode ?? -1
             if status == 401 || status == 403 {
-                return errorResult("Cookie Cursor expiré (\(status))")
+                return errorResult("Cursor cookie expired (\(status))")
             }
             guard (200...299).contains(status), let csvText = String(data: data, encoding: .utf8) else {
-                return errorResult("Export Cursor indisponible (\(status))")
+                return errorResult("Cursor export unavailable (\(status))")
             }
             guard let parsed = Self.sumCosts(csv: csvText) else {
-                return errorResult("Format CSV inattendu")
+                return errorResult("Unexpected CSV format")
             }
 
             return CursorResult(
@@ -74,14 +74,14 @@ public final class CursorTracker {
                 requestCount: parsed.count,
                 requestLimit: nil,
                 dailyCosts: parsed.daily,
-                statusText: "\(parsed.count) requêtes ce cycle",
+                statusText: "\(parsed.count) requests this cycle",
                 isConfigured: true,
                 isOrgManaged: true,
                 orgBadge: "Team",
                 isError: false
             )
         } catch {
-            return errorResult("Réseau : \(error.localizedDescription)")
+            return errorResult("Network: \(error.localizedDescription)")
         }
     }
 

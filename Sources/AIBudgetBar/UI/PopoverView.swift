@@ -66,7 +66,7 @@ public struct PopoverView: View {
                             .font(.system(size: 11, weight: .medium))
                             .foregroundColor(.secondary)
 
-                        Text("Reste: \(String(format: "%.2f %@", summary.remainingBudget, config.currency))")
+                        Text("Left: \(String(format: "%.2f %@", summary.remainingBudget, config.currency))")
                             .font(.system(size: 11, weight: .semibold))
                             .foregroundColor(summary.remainingBudget > 0 ? .green : .red)
                     }
@@ -95,14 +95,14 @@ public struct PopoverView: View {
                     .frame(height: 7)
 
                     HStack {
-                        Text(String(format: "%.1f%% du budget consommé", summary.percentUsed))
+                        Text(String(format: "%.1f%% of budget used", summary.percentUsed))
                             .font(.system(size: 10, weight: .medium))
                             .foregroundColor(summary.isOverBudget ? .red : (summary.isWarning ? .orange : .secondary))
 
                         Spacer()
 
                         if config.demoMode {
-                            Text("MODE DÉMO")
+                            Text("DEMO MODE")
                                 .font(.system(size: 9, weight: .heavy))
                                 .padding(.horizontal, 4)
                                 .padding(.vertical, 1)
@@ -119,7 +119,7 @@ public struct PopoverView: View {
                         Image(systemName: "exclamationmark.triangle.fill")
                             .foregroundColor(.red)
                             .font(.system(size: 11))
-                        Text("Plafond mensuel dépassé !")
+                        Text("Monthly limit exceeded!")
                             .font(.system(size: 11, weight: .semibold))
                             .foregroundColor(.red)
                         Spacer()
@@ -162,7 +162,7 @@ public struct PopoverView: View {
                         Image(systemName: "arrow.clockwise")
                             .rotationEffect(.degrees(manager.isRefreshing ? 360 : 0))
                             .animation(manager.isRefreshing ? Animation.linear(duration: 1).repeatForever(autoreverses: false) : .default, value: manager.isRefreshing)
-                        Text(manager.isRefreshing ? "Actualisation..." : "Rafraîchir")
+                        Text(manager.isRefreshing ? "Refreshing..." : "Refresh")
                     }
                     .font(.system(size: 11))
                 }
@@ -181,7 +181,7 @@ public struct PopoverView: View {
                         .foregroundColor(.secondary)
                 }
                 .buttonStyle(PlainButtonStyle())
-                .help("Préférences et clés API")
+                .help("Preferences and API keys")
 
                 // Quit button
                 Button(action: {
@@ -192,7 +192,7 @@ public struct PopoverView: View {
                         .foregroundColor(.secondary)
                 }
                 .buttonStyle(PlainButtonStyle())
-                .help("Quitter AI Budget Bar")
+                .help("Quit AI Budget Bar")
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 10)

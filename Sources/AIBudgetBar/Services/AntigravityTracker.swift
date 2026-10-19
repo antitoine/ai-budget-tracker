@@ -143,8 +143,8 @@ public final class AntigravityTracker {
             let claude7d = Int((claudeGroup?.weeklyRemaining ?? 0.0).rounded())
 
             let primaryText = "Gemini \(gemPct)% • Argon \(argPct)%"
-            let secondaryText = "Claude/GPT: \(claude5h)% (5h) • \(claude7d)% (7j)"
-            let status = "Gemini: \(Int((geminiGroup?.weeklyRemaining ?? 100).rounded()))% (7j) / \(gemPct)% (5h) • Argon: \(argPct)%"
+            let secondaryText = "Claude/GPT: \(claude5h)% (5h) • \(claude7d)% (7d)"
+            let status = "Gemini: \(Int((geminiGroup?.weeklyRemaining ?? 100).rounded()))% (7d) / \(gemPct)% (5h) • Argon: \(argPct)%"
 
             // Main progress bar shows Gemini / Argon remaining percentage
             let mainRemaining = Double(min(gemPct, argPct))
@@ -171,8 +171,8 @@ public final class AntigravityTracker {
 
         let formattedTokens = formatTokens(totalInput + totalOutput)
         let status = isEnt
-            ? "Cycle du \(config.antigravityBillingResetDay) • \(activeConversations) sessions • \(formattedTokens) tokens"
-            : "Forfait à quotas • \(activeConversations) session\(activeConversations > 1 ? "s" : "") active\(activeConversations > 1 ? "s" : "") (5h)"
+            ? "Cycle starting on \(config.antigravityBillingResetDay) • \(activeConversations) sessions • \(formattedTokens) tokens"
+            : "Quota-based plan • \(activeConversations) active session\(activeConversations > 1 ? "s" : "") (5h)"
 
         return AntigravityResult(
             cost: isEnt ? totalCost : 0.0,
@@ -269,7 +269,7 @@ public final class AntigravityTracker {
 
         var result: [QuotaGroup] = []
         for g in rawGroups {
-            let rawName = (g["displayName"] as? String) ?? "Modèles"
+            let rawName = (g["displayName"] as? String) ?? "Models"
             let cleanName: String
             if rawName.lowercased().contains("gemini models") {
                 cleanName = "Gemini"
@@ -330,7 +330,7 @@ public final class AntigravityTracker {
         let minutes = (diff % 3600) / 60
 
         if days > 0 {
-            return "\(days)j \(hours)h"
+            return "\(days)d \(hours)h"
         } else if hours > 0 {
             return "\(hours)h \(minutes)m"
         } else {

@@ -27,13 +27,13 @@ config: build
 
 clean:
 	@rm -rf build
-	@echo "Dossier build nettoyé."
+	@echo "Build directory cleaned."
 
 help:
-	@echo "Commandes disponibles :"
-	@echo "  make build    - Compile AIBudgetBar et crée le bundle AIBudgetBar.app"
-	@echo "  make install  - Compile, installe dans ~/Applications et lance l'app"
-	@echo "  make status   - Affiche le résumé du budget dans le terminal"
-	@echo "  make json     - Exporte le résumé au format JSON"
-	@echo "  make run      - Lance l'application directement"
-	@echo "  make clean    - Supprime les artefacts de compilation"
+	@echo "Available commands:"
+	@echo "  make build    - Compile AIBudgetBar and create AIBudgetBar.app bundle"
+	@echo "  make install  - Compile, install into ~/Applications and launch the app"
+	@echo "  make status   - Display budget summary in the terminal"
+	@echo "  make json     - Export summary in JSON format"
+	@echo "  make run      - Launch the application directly"
+	@echo "  make clean    - Remove build artifacts"

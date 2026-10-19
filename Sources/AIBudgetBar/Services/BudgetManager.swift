@@ -32,7 +32,7 @@ public final class BudgetManager: ObservableObject {
             self.summary = BudgetSummary(
                 totalCost: 0.0,
                 totalBudget: loadedConfig.totalBudget,
-                monthName: "Cycles en cours",
+                monthName: "Current Cycles",
                 services: AIService.allCases.map { ServiceUsage(service: $0, budgetLimit: loadedConfig.budgetFor(service: $0)) },
                 dailyHistory: Self.build7DayHistory(cursor: [:], antigravity: [:], claude: [:])
             )
@@ -84,7 +84,7 @@ public final class BudgetManager: ObservableObject {
             cursorDaily = Dictionary(uniqueKeysWithValues: summary.dailyHistory.map { ($0.dateString, $0.cursorCost) })
             let f = DateFormatter()
             f.dateFormat = "HH:mm"
-            cursorStatus = "\(cursorRes.statusText) • valeur de \(f.string(from: prev.lastUpdated))"
+            cursorStatus = "\(cursorRes.statusText) • as of \(f.string(from: prev.lastUpdated))"
         }
 
         let cursorIsEnt = cfg.isEnterprise(service: .cursor)
@@ -97,13 +97,13 @@ public final class BudgetManager: ObservableObject {
             requestCount: cursorRequests,
             requestLimit: nil,
             statusText: cursorStatus,
-            statusDetails: cursorIsEnt ? BillingCycle.resetLabel(resetDay: cfg.cursorBillingResetDay) : "Quota glissant • Auto",
+            statusDetails: cursorIsEnt ? BillingCycle.resetLabel(resetDay: cfg.cursorBillingResetDay) : "Rolling quota • Auto",
             isConfigured: cursorRes.isConfigured,
             isOrgManaged: cursorIsEnt,
-            orgBadge: cursorIsEnt ? "🏢 Entreprise" : "👤 Forfait",
+            orgBadge: cursorIsEnt ? "🏢 Enterprise" : "👤 Plan",
             isQuotaMode: !cursorIsEnt,
-            quotaPrimaryText: !cursorIsEnt ? String(format: "%.0f%% restant", cursorRemaining) : nil,
-            quotaSecondaryText: !cursorIsEnt ? "Quota disponible" : nil,
+            quotaPrimaryText: !cursorIsEnt ? String(format: "%.0f%% remaining", cursorRemaining) : nil,
+            quotaSecondaryText: !cursorIsEnt ? "Available quota" : nil,
             quotaPercent: !cursorIsEnt ? cursorQuotaUsed : nil,
             isError: cursorRes.isError,
             lastUpdated: cursorRes.isError ? (previousCursor?.lastUpdated ?? Date()) : Date()
@@ -121,13 +121,13 @@ public final class BudgetManager: ObservableObject {
             cacheReadTokens: antigravityRes.cacheReadTokens,
             requestCount: antigravityRes.conversationCount,
             statusText: antigravityRes.statusText,
-            statusDetails: agyIsEnt ? BillingCycle.resetLabel(resetDay: cfg.antigravityBillingResetDay) : "Quotas temps réel (Hebdo & 5h)",
+            statusDetails: agyIsEnt ? BillingCycle.resetLabel(resetDay: cfg.antigravityBillingResetDay) : "Real-time quotas (Weekly & 5h)",
             isConfigured: antigravityRes.isConfigured,
             isOrgManaged: agyIsEnt,
-            orgBadge: agyIsEnt ? "🏢 Entreprise" : "👤 Forfait",
+            orgBadge: agyIsEnt ? "🏢 Enterprise" : "👤 Plan",
             isQuotaMode: !agyIsEnt,
-            quotaPrimaryText: !agyIsEnt ? (antigravityRes.quotaPrimaryText ?? String(format: "%.0f%% restant", agyRemainingPct)) : nil,
-            quotaSecondaryText: !agyIsEnt ? (antigravityRes.quotaSecondaryText ?? "Quota disponible") : nil,
+            quotaPrimaryText: !agyIsEnt ? (antigravityRes.quotaPrimaryText ?? String(format: "%.0f%% remaining", agyRemainingPct)) : nil,
+            quotaSecondaryText: !agyIsEnt ? (antigravityRes.quotaSecondaryText ?? "Available quota") : nil,
             quotaPercent: !agyIsEnt ? agyUsedPct : nil,
             quotaGroups: !agyIsEnt ? antigravityRes.quotaGroups : [],
             isError: false,
@@ -144,13 +144,13 @@ public final class BudgetManager: ObservableObject {
             outputTokens: claudeRes.outputTokens,
             cacheReadTokens: claudeRes.cacheReadTokens,
             statusText: claudeRes.statusText,
-            statusDetails: claudeIsEnt ? BillingCycle.resetLabel(resetDay: cfg.claudeBillingResetDay) : "Quota glissant • Auto",
+            statusDetails: claudeIsEnt ? BillingCycle.resetLabel(resetDay: cfg.claudeBillingResetDay) : "Rolling quota • Auto",
             isConfigured: claudeRes.isConfigured,
             isOrgManaged: claudeIsEnt,
-            orgBadge: claudeIsEnt ? "🏢 Entreprise" : "👤 Forfait",
+            orgBadge: claudeIsEnt ? "🏢 Enterprise" : "👤 Plan",
             isQuotaMode: !claudeIsEnt,
-            quotaPrimaryText: !claudeIsEnt ? "100% restant" : nil,
-            quotaSecondaryText: !claudeIsEnt ? "Quota disponible" : nil,
+            quotaPrimaryText: !claudeIsEnt ? "100% remaining" : nil,
+            quotaSecondaryText: !claudeIsEnt ? "Available quota" : nil,
             quotaPercent: !claudeIsEnt ? 0.0 : nil,
             isError: claudeRes.isError,
             lastUpdated: Date()
@@ -170,7 +170,7 @@ public final class BudgetManager: ObservableObject {
         let newSummary = BudgetSummary(
             totalCost: enterpriseTotalCost,
             totalBudget: cfg.totalBudget,
-            monthName: "Budget Entreprise",
+            monthName: "Enterprise Budget",
             services: allServices,
             dailyHistory: dailyPoints,
             lastRefreshed: Date()
@@ -206,8 +206,8 @@ public final class BudgetManager: ObservableObject {
                 let costStr = String(format: "%.2f %@", summary.totalCost, config.currency)
                 let budgetStr = String(format: "%.2f %@", summary.totalBudget, config.currency)
                 sendMacNotification(
-                    title: "Alerte Budget AI (\(pctString))",
-                    message: "Vous avez consommé \(costStr) sur un budget de \(budgetStr)."
+                    title: "AI Budget Alert (\(pctString))",
+                    message: "You have consumed \(costStr) of your \(budgetStr) budget."
                 )
             }
         }
@@ -232,7 +232,7 @@ public final class BudgetManager: ObservableObject {
         dayFormatter.dateFormat = "yyyy-MM-dd"
 
         let labelFormatter = DateFormatter()
-        labelFormatter.locale = Locale(identifier: "fr_FR")
+        labelFormatter.locale = Locale(identifier: "en_US")
         labelFormatter.dateFormat = "EEE"
 
         return (0..<7).reversed().compactMap { i in

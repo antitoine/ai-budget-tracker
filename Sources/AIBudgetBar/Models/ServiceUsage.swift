@@ -55,7 +55,7 @@ public struct ServiceUsage: Identifiable, Codable {
         cacheReadTokens: Int = 0,
         requestCount: Int = 0,
         requestLimit: Int? = nil,
-        statusText: String = "Non configuré",
+        statusText: String = "Not configured",
         statusDetails: String = "",
         isConfigured: Bool = false,
         isOrgManaged: Bool = false,
@@ -145,7 +145,7 @@ public struct ServiceUsage: Identifiable, Codable {
 public struct DailyPoint: Identifiable, Codable {
     public var id: String { dateString }
     public var dateString: String // YYYY-MM-DD
-    public var dayLabel: String   // e.g. "Lun", "Mar"
+    public var dayLabel: String   // e.g. "Mon", "Tue"
     public var cursorCost: Double
     public var antigravityCost: Double
     public var claudeCost: Double
